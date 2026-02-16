@@ -2,8 +2,10 @@ import {
   View, Text, StyleSheet, TouchableOpacity, Modal, FlatList
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const months = [
   "January 2025", "February 2025", "March 2025",
@@ -13,12 +15,59 @@ const months = [
 ];
 
 export default function Dashboard() {
-  const [selectedMonth, setSelectedMonth] = useState("November 2025");
+
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+const [transactions, setTransactions] = useState([]);
+const [income, setIncome] = useState(0);
+const [expense, setExpense] = useState(0);
+const [investment, setInvestment] = useState(0);
+const balance = income - expense - investment;
 
   const userName = "Ayush";
   const firstLetter = userName.charAt(0);
+  const getCurrentMonth = () => {
+  const now = new Date();
+  return now.toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+
+const fetchTransactions = async () => {
+  const token = await AsyncStorage.getItem("token");
+
+  const response = await fetch(
+    `http://localhost:8000/transactions?month=${selectedMonth}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+  setTransactions(data);
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+  let totalInvestment = 0;
+
+  data.forEach((item: any) => {
+    if (item.type === "Income") totalIncome += item.amount;
+    if (item.type === "Expense") totalExpense += item.amount;
+    if (item.type === "Investment") totalInvestment += item.amount;
+  });
+
+  setIncome(totalIncome);
+  setExpense(totalExpense);
+  setInvestment(totalInvestment);
+};
+useEffect(() => {
+  fetchTransactions();
+}, [selectedMonth]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
@@ -48,9 +97,77 @@ export default function Dashboard() {
         </View>
 
         <Text style={styles.balanceLabel}>Current Balance</Text>
-        <Text style={styles.balance}>$87,457.85</Text>
+       <Text style={styles.balance}>₹ {balance}</Text>
+
         <Text style={styles.profit}>+ $784 than last week</Text>
       </LinearGradient>
+<FlatList
+  data={transactions}
+  keyExtractor={(item) => item._id || Math.random().toString()}
+  showsVerticalScrollIndicator={false}
+  contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+  
+  ListHeaderComponent={
+    <>
+      <View style={styles.body}>
+        <Text style={styles.sectionTitle}>Your Money</Text>
+
+        <View style={styles.fullCard}>
+          <Text style={styles.cardLabel}>Income</Text>
+          <Text style={styles.cardAmount}>₹ {income}</Text>
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.halfCard}>
+            <Text style={styles.cardLabel}>Expenses</Text>
+            <Text style={styles.expenseAmount}>₹ {expense}</Text>
+          </View>
+
+          <View style={styles.halfCard}>
+            <Text style={styles.cardLabel}>Investment</Text>
+            <Text style={styles.investAmount}>₹ {investment}</Text>
+          </View>
+        </View>
+
+        <Text style={{ marginTop: 25, fontWeight: "bold", fontSize: 16 }}>
+          Recent Transactions
+        </Text>
+      </View>
+    </>
+  }
+
+  renderItem={({ item }) => {
+    const isExpense = item.type === "Expense";
+
+    const formattedDate =
+      item.created_at && !isNaN(Date.parse(item.created_at))
+        ? new Date(item.created_at).toLocaleString()
+        : "";
+
+    return (
+      <View style={styles.transactionCard}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontWeight: "bold" }}>{item.title}</Text>
+          {formattedDate !== "" && (
+            <Text style={{ fontSize: 12, color: "#777" }}>
+              {formattedDate}
+            </Text>
+          )}
+        </View>
+
+        <Text
+          style={{
+            color: isExpense ? "#ff5c5c" : "#4CAF50",
+            fontWeight: "bold",
+            fontSize: 16,
+          }}
+        >
+          ₹ {item.amount}
+        </Text>
+      </View>
+    );
+  }}
+/>
 
       {/* 🔥 Bottom Section */}
       <View style={styles.body}>
@@ -59,25 +176,33 @@ export default function Dashboard() {
         {/* Income Full Width */}
         <View style={styles.fullCard}>
           <Text style={styles.cardLabel}>Income</Text>
-          <Text style={styles.cardAmount}>$4,875.12</Text>
+      <Text style={styles.cardAmount}>₹ {income}</Text>
+
         </View>
 
         {/* Expense + Investment Row */}
         <View style={styles.row}>
           <View style={styles.halfCard}>
             <Text style={styles.cardLabel}>Expenses</Text>
-            <Text style={styles.expenseAmount}>$8,145.78</Text>
+         <Text style={styles.expenseAmount}>₹ {expense}</Text>
+
           </View>
 
           <View style={styles.halfCard}>
             <Text style={styles.cardLabel}>Investment</Text>
-            <Text style={styles.investAmount}>$2,145.78</Text>
+       <Text style={styles.investAmount}>₹ {investment}</Text>
+
           </View>
         </View>
 
 
 
       </View>
+{/* Recent Trasaction  */}
+
+
+
+
 
       {/* 🔥 Month Dropdown Modal */}
       <Modal visible={showMonthDropdown} transparent animationType="fade">
@@ -286,5 +411,15 @@ const styles = StyleSheet.create({
     marginTop: 5,
     color: "#4CAF50",
   },
+transactionCard: {
+  backgroundColor: "#fff",
+  padding: 15,
+  borderRadius: 18,
+  marginBottom: 12,
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  elevation: 3,
+},
 
 });

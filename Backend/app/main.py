@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.routes import auth, transaction
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import auth
@@ -14,9 +15,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
+
+
 # ✅ Routers
 app.include_router(auth.router)
-
+app.include_router(transaction.router)
 @app.get("/")
 def root():
     return {"message": "Salary Management API Running 🚀"}

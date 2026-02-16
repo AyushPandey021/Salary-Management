@@ -84,3 +84,6 @@ backend/
 │   │   ├── analytics_service.py
 │
 ├── requirements.txt
+
+
+venv\Scripts\Activate
