@@ -1,199 +1,290 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from "react-native";
+import {
+  View, Text, StyleSheet, TouchableOpacity, Modal, FlatList
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
-const BASE_URL = "http://localhost:8000";
+const months = [
+  "January 2025", "February 2025", "March 2025",
+  "April 2025", "May 2025", "June 2025",
+  "July 2025", "August 2025", "September 2025",
+  "October 2025", "November 2025", "December 2025"
+];
+
 export default function Dashboard() {
-  const [userName, setUserName] = useState("");
-  const [showMenu, setShowMenu] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("November 2025");
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
-  const salary = 50000;
-  const expenses = 25000;
-  const investments = 10000;
-  const balance = salary - expenses - investments;
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  const fetchUser = async () => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-
-      const response = await fetch(`${BASE_URL}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      setUserName(data.name || "User");
-    } catch (error) {
-      console.log("Error fetching user");
-    }
-  };
-
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem("token");
-    router.replace("/login");
-  };
-
-  const firstLetter = userName ? userName.charAt(0).toUpperCase() : "U";
+  const userName = "Ayush";
+  const firstLetter = userName.charAt(0);
 
   return (
-    <LinearGradient
-      colors={["#0f2027", "#203a43", "#2c5364"]}
-      style={styles.container}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>
-          Welcome, {userName} 👋
-        </Text>
+    <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
 
-        <TouchableOpacity
-          style={styles.profileCircle}
-          onPress={() => setShowMenu(true)}
-        >
-          <Text style={styles.profileText}>{firstLetter}</Text>
-        </TouchableOpacity>
+      {/* 🔥 Top Gradient Header */}
+      <LinearGradient
+        colors={["#9C6CFB", "#6E8EFB"]}
+        style={styles.header}
+      >
+
+        {/* Profile + Month Row */}
+        <View style={styles.topRow}>
+          <TouchableOpacity
+            style={styles.profileCircle}
+            onPress={() => setShowProfile(true)}
+          >
+            <Text style={styles.profileText}>{firstLetter}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.monthContainer}
+            onPress={() => setShowMonthDropdown(true)}
+          >
+            <Text style={styles.monthText}>{selectedMonth}</Text>
+            <Ionicons name="chevron-down" size={16} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.balanceLabel}>Current Balance</Text>
+        <Text style={styles.balance}>$87,457.85</Text>
+        <Text style={styles.profit}>+ $784 than last week</Text>
+      </LinearGradient>
+
+      {/* 🔥 Bottom Section */}
+      <View style={styles.body}>
+        <Text style={styles.sectionTitle}>Your Money</Text>
+
+        {/* Income Full Width */}
+        <View style={styles.fullCard}>
+          <Text style={styles.cardLabel}>Income</Text>
+          <Text style={styles.cardAmount}>$4,875.12</Text>
+        </View>
+
+        {/* Expense + Investment Row */}
+        <View style={styles.row}>
+          <View style={styles.halfCard}>
+            <Text style={styles.cardLabel}>Expenses</Text>
+            <Text style={styles.expenseAmount}>$8,145.78</Text>
+          </View>
+
+          <View style={styles.halfCard}>
+            <Text style={styles.cardLabel}>Investment</Text>
+            <Text style={styles.investAmount}>$2,145.78</Text>
+          </View>
+        </View>
+
+
+
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Salary Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Monthly Salary</Text>
-          <Text style={styles.amount}>₹ {salary}</Text>
+      {/* 🔥 Month Dropdown Modal */}
+      <Modal visible={showMonthDropdown} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.dropdown}>
+            <FlatList
+              data={months}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.monthItem}
+                  onPress={() => {
+                    setSelectedMonth(item);
+                    setShowMonthDropdown(false);
+                  }}
+                >
+                  <Text>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
         </View>
+      </Modal>
 
-        {/* Expenses Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Total Expenses</Text>
-          <Text style={[styles.amount, { color: "#ff6b6b" }]}>
-            ₹ {expenses}
-          </Text>
-        </View>
+      {/* 🔥 Profile Modal */}
+      <Modal visible={showProfile} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.profileModal}>
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={() => setShowProfile(false)}
+            >
+              <Ionicons name="close" size={24} />
+            </TouchableOpacity>
 
-        {/* Investments Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Investments</Text>
-          <Text style={[styles.amount, { color: "#4cd137" }]}>
-            ₹ {investments}
-          </Text>
-        </View>
+            <Text style={styles.profileName}>{userName}</Text>
+            <Text style={styles.profileEmail}>ayush@email.com</Text>
 
-        {/* Balance Card */}
-        <View style={[styles.card, styles.balanceCard]}>
-          <Text style={styles.cardTitle}>Remaining asdadsg Balance</Text>
-          <Text style={styles.balanceAmount}>₹ {balance}</Text>
-        </View>
-      </ScrollView>
-
-      {/* Profile Modal */}
-      <Modal
-        transparent
-        visible={showMenu}
-        animationType="fade"
-        onRequestClose={() => setShowMenu(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          onPress={() => setShowMenu(false)}
-        >
-          <View style={styles.modalContent}>
-            <TouchableOpacity onPress={handleLogout}>
-              <Text style={styles.logoutText}>Logout</Text>
+            <TouchableOpacity style={styles.logoutBtn}>
+              <Text style={{ color: "#fff" }}>Logout</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
-    </LinearGradient>
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-
   header: {
+    height: 250,
+    padding: 25,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+  topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
   },
-
-  welcomeText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-
   profileCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#4facfe",
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
   },
-
   profileText: {
-    color: "#fff",
     fontWeight: "bold",
+    color: "#6E8EFB",
+  },
+  monthContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  monthText: {
+    color: "#fff",
+    marginRight: 5,
+  },
+  balanceLabel: {
+    marginTop: 40,
+    color: "#fff",
     fontSize: 16,
   },
-
-  content: {
-    padding: 20,
+  balance: {
+    fontSize: 34,
+    fontWeight: "bold",
+    color: "#fff",
   },
-
+  profit: {
+    color: "#fff",
+    opacity: 0.8,
+  },
+  body: {
+    marginTop: -40,
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  cardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   card: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    width: "98%",
+    backgroundColor: "#fff",
+    padding: 20,
+    alignItems: "center",
+    borderRadius: 20,
+    elevation: 5,
+  },
+  cardLabel: { color: "#777" },
+  cardAmount: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 5,
+  },
+  cardAmountRed: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 5,
+    color: "red",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dropdown: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 10,
+    maxHeight: 300,
+  },
+  monthItem: {
+    padding: 15,
+    borderBottomWidth: 0.5,
+    borderColor: "#ddd",
+  },
+  profileModal: {
+    width: "80%",
+    backgroundColor: "#fff",
+    padding: 25,
+    borderRadius: 20,
+  },
+  closeBtn: {
+    alignSelf: "flex-end",
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+  profileEmail: {
+    color: "#777",
+    marginBottom: 20,
+  },
+  logoutBtn: {
+    backgroundColor: "#6E8EFB",
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  fullCard: {
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 20,
     marginBottom: 15,
+    elevation: 5,
   },
 
-  cardTitle: {
-    color: "#aaa",
-    fontSize: 14,
-    marginBottom: 5,
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 
-  amount: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-
-  balanceCard: {
-    backgroundColor: "#4facfe",
-  },
-
-  balanceAmount: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "flex-end",
-    paddingTop: 80,
-    paddingRight: 20,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-
-  modalContent: {
+  halfCard: {
+    width: "48%",
     backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
+    padding: 20,
+    borderRadius: 20,
+    elevation: 5,
   },
 
-  logoutText: {
-    color: "red",
+  expenseAmount: {
+    fontSize: 18,
     fontWeight: "bold",
+    marginTop: 5,
+    color: "#ff5c5c",
   },
+
+  investAmount: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 5,
+    color: "#4CAF50",
+  },
+
 });
