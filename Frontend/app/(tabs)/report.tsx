@@ -26,7 +26,9 @@ type Transaction = {
   created_at: string;
 };
 
+
 export default function Reports() {
+
   const [activeType, setActiveType] = useState<
     "Income" | "Expense" | "Investment"
   >("Expense");
@@ -34,102 +36,109 @@ export default function Reports() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
 
-  const getCurrentMonth = () => {
+  // 🔥 Generate last 12 months
+  const generateMonths = () => {
     const now = new Date();
-    return now.toLocaleString("default", {
-      month: "long",
-      year: "numeric",
-    });
+
+    return Array.from({ length: 12 }, (_, i) => {
+      const date = new Date(
+        now.getFullYear(),
+        now.getMonth() - i
+      );
+
+      return date.toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      });
+    }).reverse();
   };
 
-  const selectedMonth = getCurrentMonth();
+  // 🔥 Months state (only once)
+  const [months] = useState(generateMonths());
 
-  // 🔥 Fetch Data
+  // 🔥 Selected Month (only once)
+  const [selectedMonth, setSelectedMonth] = useState(
+    months[months.length - 1] // current month
+  );
+
+  // 🔥 Fetch Transactions
   const fetchTransactions = async () => {
-    const token = await AsyncStorage.getItem("token");
+    try {
+      const token = await AsyncStorage.getItem("token");
 
-    const response = await fetch(
-      `http://localhost:8000/transactions?month=${selectedMonth}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      const response = await fetch(
+        `http://localhost:8000/transactions?month=${selectedMonth}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const data = await response.json();
-    setTransactions(data);
+      const data = await response.json();
+      setTransactions(data);
+
+    } catch (error) {
+      console.log("Fetch error:", error);
+    }
   };
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  }, [selectedMonth]);
 
-  // 🔥 Filter + Prepare Chart
-useEffect(() => {
-  const filtered = transactions.filter(
-    (t) => t.type === activeType
-  );
-
-  const grouped: any = {};
-  let total = 0;
-
-  filtered.forEach((item) => {
-    total += item.amount;
-
-    if (grouped[item.tag]) {
-      grouped[item.tag] += item.amount;
-    } else {
-      grouped[item.tag] = item.amount;
-    }
-  });
-
-  const colors = [
-    "#7C5CFC",
-    "#4CAF50",
-    "#FF5C5C",
-    "#FFC107",
-    "#00BCD4",
-    "#9C27B0",
-  ];
-
-  const formatted = Object.keys(grouped).map((key, index) => {
-    const amount = grouped[key];
-    const percentage = ((amount / total) * 100).toFixed(1);
-
-    return {
-      name: key,
-      amount: amount,
-      percentage: percentage,
-      color: colors[index % colors.length],
-      legendFontColor: "#333",
-      legendFontSize: 13,
-    };
-  });
-
-  setChartData(formatted);
-}, [activeType, transactions]);
-const generateMonths = () => {
-  const now = new Date();
-
-  return Array.from({ length: 12 }, (_, i) => {
-    const date = new Date(
-      now.getFullYear(),
-      now.getMonth() - i
+  // 🔥 Prepare Chart Data
+  useEffect(() => {
+    const filtered = transactions.filter(
+      (t) => t.type === activeType
     );
 
-    return date.toLocaleString("default", {
-      month: "long",
-      year: "numeric",
+    const grouped: any = {};
+    let total = 0;
+
+    filtered.forEach((item) => {
+      total += item.amount;
+
+      if (grouped[item.tag]) {
+        grouped[item.tag] += item.amount;
+      } else {
+        grouped[item.tag] = item.amount;
+      }
     });
-  }).reverse();
-};
 
-const months = generateMonths();
+    const colors = [
+      "#7C5CFC",
+      "#4CAF50",
+      "#FF5C5C",
+      "#FFC107",
+      "#00BCD4",
+      "#9C27B0",
+    ];
 
-const [ setSelectedMonth] = useState(
-  months[months.length - 1]   // current month default
-);
+    const formatted = Object.keys(grouped).map((key, index) => {
+      const amount = grouped[key];
+      const percentage =
+        total > 0
+          ? ((amount / total) * 100).toFixed(1)
+          : "0";
+
+      return {
+        name: key,
+        amount: amount,
+        percentage: percentage,
+        color: colors[index % colors.length],
+        legendFontColor: "#333",
+        legendFontSize: 13,
+      };
+    });
+
+    setChartData(formatted);
+
+  }, [activeType, transactions]);
+
+
+
+
 
 
 

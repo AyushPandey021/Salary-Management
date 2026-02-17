@@ -7,67 +7,97 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const months = [
-  "January 2025", "February 2025", "March 2025",
-  "April 2025", "May 2025", "June 2025",
-  "July 2025", "August 2025", "September 2025",
-  "October 2025", "November 2025", "December 2025"
-];
+
 
 export default function Dashboard() {
+  const currentDate = new Date();
+function generateMonths(year) {
+  return Array.from({ length: 12 }, (_, i) =>
+    new Date(year, i).toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    })
+  );
+}
+const [selectedMonth, setSelectedMonth] = useState(
+  currentDate.toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  })
+);
+const currentYear = currentDate.getFullYear();
+
 
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-const [transactions, setTransactions] = useState([]);
-const [income, setIncome] = useState(0);
-const [expense, setExpense] = useState(0);
-const [investment, setInvestment] = useState(0);
-const balance = income - expense - investment;
+  const [transactions, setTransactions] = useState([]);
+  const [income, setIncome] = useState(0);
+  const [expense, setExpense] = useState(0);
+  const [investment, setInvestment] = useState(0);
+   
+
+  const [months, setMonths] = useState(generateMonths(currentYear));
+  
+
+
+const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  const balance = income - expense - investment;
 
   const userName = "Ayush";
   const firstLetter = userName.charAt(0);
+
+
   const getCurrentMonth = () => {
-  const now = new Date();
-  return now.toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
-};
+    const now = new Date();
+    return now.toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    });
+  };
 
-const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
-const fetchTransactions = async () => {
-  const token = await AsyncStorage.getItem("token");
-
-  const response = await fetch(
-    `http://localhost:8000/transactions?month=${selectedMonth}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  const data = await response.json();
-  setTransactions(data);
-
-  let totalIncome = 0;
-  let totalExpense = 0;
-  let totalInvestment = 0;
-
-  data.forEach((item: any) => {
-    if (item.type === "Income") totalIncome += item.amount;
-    if (item.type === "Expense") totalExpense += item.amount;
-    if (item.type === "Investment") totalInvestment += item.amount;
-  });
-
-  setIncome(totalIncome);
-  setExpense(totalExpense);
-  setInvestment(totalInvestment);
-};
 useEffect(() => {
-  fetchTransactions();
-}, [selectedMonth]);
+  const newMonths = generateMonths(selectedYear);
+  setMonths(newMonths);
+  setSelectedMonth(newMonths[new Date().getMonth()]);
+}, [selectedYear]);
+
+
+
+  const fetchTransactions = async () => {
+    const token = await AsyncStorage.getItem("token");
+
+    const response = await fetch(
+      `http://localhost:8000/transactions?month=${selectedMonth}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+    setTransactions(data);
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let totalInvestment = 0;
+
+data.forEach((item) => {
+
+      if (item.type === "Income") totalIncome += item.amount;
+      if (item.type === "Expense") totalExpense += item.amount;
+      if (item.type === "Investment") totalInvestment += item.amount;
+    });
+
+    setIncome(totalIncome);
+    setExpense(totalExpense);
+    setInvestment(totalInvestment);
+  };
+  useEffect(() => {
+    fetchTransactions();
+  }, [selectedMonth]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
@@ -91,83 +121,93 @@ useEffect(() => {
             style={styles.monthContainer}
             onPress={() => setShowMonthDropdown(true)}
           >
-            <Text style={styles.monthText}>{selectedMonth}</Text>
-            <Ionicons name="chevron-down" size={16} color="#fff" />
-          </TouchableOpacity>
+<View style={styles.monthRow}>
+  <Text style={styles.monthText}>{selectedMonth}</Text>
+
+  <TouchableOpacity
+    onPress={() => setShowMonthDropdown(true)}
+    style={styles.calendarBtn}
+  >
+    <Ionicons name="calendar-outline" size={20} color="#fff" />
+  </TouchableOpacity>
+</View>
+  </TouchableOpacity>
+
+
         </View>
 
         <Text style={styles.balanceLabel}>Current Balance</Text>
-       <Text style={styles.balance}>₹ {balance}</Text>
+        <Text style={styles.balance}>₹ {balance}</Text>
 
-        <Text style={styles.profit}>+ $784 than last week</Text>
+        {/* <Text style={styles.profit}>+ $784 than last week</Text> */}
       </LinearGradient>
-<FlatList
-  data={transactions}
-  keyExtractor={(item) => item._id || Math.random().toString()}
-  showsVerticalScrollIndicator={false}
-  contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
-  
-  ListHeaderComponent={
-    <>
-      <View style={styles.body}>
-        <Text style={styles.sectionTitle}>Your Money</Text>
+      <FlatList
+        data={transactions}
+        keyExtractor={(item) => item._id || Math.random().toString()}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
 
-        <View style={styles.fullCard}>
-          <Text style={styles.cardLabel}>Income</Text>
-          <Text style={styles.cardAmount}>₹ {income}</Text>
-        </View>
+        ListHeaderComponent={
+          <>
+            <View style={styles.body}>
+              <Text style={styles.sectionTitle}>Your Money</Text>
 
-        <View style={styles.row}>
-          <View style={styles.halfCard}>
-            <Text style={styles.cardLabel}>Expenses</Text>
-            <Text style={styles.expenseAmount}>₹ {expense}</Text>
-          </View>
+              <View style={styles.fullCard}>
+                <Text style={styles.cardLabel}>Income</Text>
+                <Text style={styles.cardAmount}>₹ {income}</Text>
+              </View>
 
-          <View style={styles.halfCard}>
-            <Text style={styles.cardLabel}>Investment</Text>
-            <Text style={styles.investAmount}>₹ {investment}</Text>
-          </View>
-        </View>
+              <View style={styles.row}>
+                <View style={styles.halfCard}>
+                  <Text style={styles.cardLabel}>Expenses</Text>
+                  <Text style={styles.expenseAmount}>₹ {expense}</Text>
+                </View>
 
-        <Text style={{ marginTop: 25, fontWeight: "bold", fontSize: 16 }}>
-          Recent Transactions
-        </Text>
-      </View>
-    </>
-  }
+                <View style={styles.halfCard}>
+                  <Text style={styles.cardLabel}>Investment</Text>
+                  <Text style={styles.investAmount}>₹ {investment}</Text>
+                </View>
+              </View>
 
-  renderItem={({ item }) => {
-    const isExpense = item.type === "Expense";
+              <Text style={{ marginTop: 25, fontWeight: "bold", fontSize: 16 }}>
+                Recent Transactions
+              </Text>
+            </View>
+          </>
+        }
 
-    const formattedDate =
-      item.created_at && !isNaN(Date.parse(item.created_at))
-        ? new Date(item.created_at).toLocaleString()
-        : "";
+        renderItem={({ item }) => {
+          const isExpense = item.type === "Expense";
 
-    return (
-      <View style={styles.transactionCard}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: "bold" }}>{item.title}</Text>
-          {formattedDate !== "" && (
-            <Text style={{ fontSize: 12, color: "#777" }}>
-              {formattedDate}
-            </Text>
-          )}
-        </View>
+          const formattedDate =
+            item.created_at && !isNaN(Date.parse(item.created_at))
+              ? new Date(item.created_at).toLocaleString()
+              : "";
 
-        <Text
-          style={{
-            color: isExpense ? "#ff5c5c" : "#4CAF50",
-            fontWeight: "bold",
-            fontSize: 16,
-          }}
-        >
-          ₹ {item.amount}
-        </Text>
-      </View>
-    );
-  }}
-/>
+          return (
+            <View style={styles.transactionCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: "bold" }}>{item.title}</Text>
+                {formattedDate !== "" && (
+                  <Text style={{ fontSize: 12, color: "#777" }}>
+                    {formattedDate}
+                  </Text>
+                )}
+              </View>
+
+              <Text
+                style={{
+                  color: isExpense ? "#ff5c5c" : "#4CAF50",
+                  fontWeight: "bold",
+                  fontSize: 16,
+                }}
+              >
+                ₹ {item.amount}
+              </Text>
+            </View>
+          );
+        }}
+      />
 
       {/* 🔥 Bottom Section */}
       <View style={styles.body}>
@@ -176,7 +216,7 @@ useEffect(() => {
         {/* Income Full Width */}
         <View style={styles.fullCard}>
           <Text style={styles.cardLabel}>Income</Text>
-      <Text style={styles.cardAmount}>₹ {income}</Text>
+          <Text style={styles.cardAmount}>₹ {income}</Text>
 
         </View>
 
@@ -184,13 +224,13 @@ useEffect(() => {
         <View style={styles.row}>
           <View style={styles.halfCard}>
             <Text style={styles.cardLabel}>Expenses</Text>
-         <Text style={styles.expenseAmount}>₹ {expense}</Text>
+            <Text style={styles.expenseAmount}>₹ {expense}</Text>
 
           </View>
 
           <View style={styles.halfCard}>
             <Text style={styles.cardLabel}>Investment</Text>
-       <Text style={styles.investAmount}>₹ {investment}</Text>
+            <Text style={styles.investAmount}>₹ {investment}</Text>
 
           </View>
         </View>
@@ -198,34 +238,59 @@ useEffect(() => {
 
 
       </View>
-{/* Recent Trasaction  */}
+      {/* Recent Trasaction  */}
 
 
 
 
 
       {/* 🔥 Month Dropdown Modal */}
-      <Modal visible={showMonthDropdown} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.dropdown}>
-            <FlatList
-              data={months}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.monthItem}
-                  onPress={() => {
-                    setSelectedMonth(item);
-                    setShowMonthDropdown(false);
-                  }}
-                >
-                  <Text>{item}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
+   <Modal visible={showMonthDropdown} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <View style={styles.dropdown}>
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 15 }}>
+        <TouchableOpacity onPress={() => setSelectedYear(selectedYear - 1)}>
+          <Ionicons name="chevron-back" size={24} />
+        </TouchableOpacity>
+
+        <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+          {selectedYear}
+        </Text>
+
+        <TouchableOpacity onPress={() => setSelectedYear(selectedYear + 1)}>
+          <Ionicons name="chevron-forward" size={24} />
+        </TouchableOpacity>
+      </View>
+
+      <FlatList
+        data={months}
+        keyExtractor={(item) => item}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.monthItem}
+            onPress={() => {
+              setSelectedMonth(item);
+              setShowMonthDropdown(false);
+            }}
+          >
+            <Text>{item}</Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+  <View style={{ alignItems: "center", marginTop: 40 }}>
+    <Ionicons name="document-outline" size={40} color="#ccc" />
+    <Text style={{ marginTop: 10, color: "#777" }}>
+      No Data Available
+    </Text>
+  </View>
+}
+
+      />
+    </View>
+  </View>
+</Modal>
+
 
       {/* 🔥 Profile Modal */}
       <Modal visible={showProfile} transparent animationType="slide">
@@ -285,6 +350,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   balanceLabel: {
+    alignItems:"center",
     marginTop: 40,
     color: "#fff",
     fontSize: 16,
@@ -389,6 +455,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
+monthRow: {
+  flexDirection: "row",
+  alignItems: "center",
+},
+
+calendarBtn: {
+  marginLeft: 10,
+},
 
   halfCard: {
     width: "48%",
@@ -411,15 +485,15 @@ const styles = StyleSheet.create({
     marginTop: 5,
     color: "#4CAF50",
   },
-transactionCard: {
-  backgroundColor: "#fff",
-  padding: 15,
-  borderRadius: 18,
-  marginBottom: 12,
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  elevation: 3,
-},
+  transactionCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 18,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 3,
+  },
 
 });
