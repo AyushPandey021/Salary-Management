@@ -87,3 +87,9 @@ backend/
 
 
 venv\Scripts\Activate
+
+
+Testing user:
+ak 
+ak@gmail.com
+11

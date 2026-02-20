@@ -13,7 +13,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import logo from "MyFirstApp\assets\images\trackpay.png";
+// import logo from "../../../../assets/images/trackpay.png";
+
 
 const BASE_URL = "http://localhost:8000";
 
@@ -83,14 +84,14 @@ export default function AuthScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full items-center"
       >
-      {/* Logo   */}
+      {/* Logo  
         <Image
           source={logo}
         
           className="w-20 h-20 mb-6"
           resizeMode="contain"
         />
-      
+       */}
 
   
         {/* Card */}
