@@ -16,7 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // import logo from "../../../../assets/images/trackpay.png";
 
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://192.168.10.35:8081";
 
 export default function AuthScreen() {
 
@@ -84,7 +84,7 @@ export default function AuthScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full items-center"
       >
-      {/* Logo  
+        {/* Logo  
         <Image
           source={logo}
         
@@ -93,7 +93,7 @@ export default function AuthScreen() {
         />
        */}
 
-  
+
         {/* Card */}
         <View className="w-full bg-white/10 backdrop-blur-md p-6 rounded-3xl">
 

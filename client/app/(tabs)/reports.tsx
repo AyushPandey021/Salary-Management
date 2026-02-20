@@ -53,7 +53,7 @@ export default function Reports() {
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:8000/transactions?month=${selectedMonth}`,
+        `http://192.168.10.35:8081/transactions?month=${selectedMonth}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -133,9 +133,8 @@ export default function Reports() {
             return (
               <TouchableOpacity
                 onPress={() => setSelectedMonth(item)}
-                className={`px-4 py-2 rounded-full mr-3 ${
-                  active ? "bg-white" : "bg-white/20"
-                }`}
+                className={`px-4 py-2 rounded-full mr-3 ${active ? "bg-white" : "bg-white/20"
+                  }`}
               >
                 <Text className={`${active ? "text-indigo-600 font-bold" : "text-white"}`}>
                   {item.split(" ")[0]}
@@ -152,9 +151,8 @@ export default function Reports() {
           <TouchableOpacity
             key={type}
             onPress={() => setActiveType(type as any)}
-            className={`px-5 py-2.5 rounded-full ${
-              activeType === type ? "bg-indigo-500" : "bg-white"
-            } shadow`}
+            className={`px-5 py-2.5 rounded-full ${activeType === type ? "bg-indigo-500" : "bg-white"
+              } shadow`}
           >
             <Text className={`${activeType === type ? "text-white" : "text-gray-600"} font-semibold`}>
               {type}

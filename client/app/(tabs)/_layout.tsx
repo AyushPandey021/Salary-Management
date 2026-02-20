@@ -1,77 +1,160 @@
 import { Tabs } from "expo-router";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
+import { useRef } from "react";
+import { useTheme } from "../../src/context/ThemeContext";
 
-/* Custom Tailwind Tab Background */
-function TabBarBackground() {
+/* Glass Floating Background */
+function TabBarBackground({ bottom, isDark }) {
   return (
-    <View className="absolute bottom-5 left-5 right-5 h-[65px] rounded-full bg-white shadow-xl" />
+    <View
+      style={{ bottom: bottom + 10 }}
+      className="absolute left-5 right-5 h-[68px] rounded-full overflow-hidden"
+    >
+      {/* IMPORTANT — tint changes */}
+      <BlurView
+        intensity={90}
+        tint={isDark ? "dark" : "light"}
+        className="flex-1 rounded-full"
+      />
+
+      {/* border glow */}
+      <View
+        className="absolute inset-0 rounded-full"
+        style={{
+          borderWidth: 1,
+          borderColor: isDark
+            ? "rgba(255,255,255,0.15)"
+            : "rgba(255,255,255,0.6)",
+        }}
+      />
+    </View>
   );
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const { isDark, theme } = useTheme();
+
+  /* FAB Animation */
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const pressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.85,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const pressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 3,
+      tension: 120,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
-        tabBarActiveTintColor: "#7C5CFC",
-        tabBarInactiveTintColor: "#777",
+        tabBarShowLabel: false,
+
+        /* icon colors adapt */
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: isDark ? "#9ca3af" : "#6b7280",
+
         tabBarStyle: {
           position: "absolute",
           backgroundColor: "transparent",
-          elevation: 0,
           borderTopWidth: 0,
+          elevation: 0,
+          height: 75 + insets.bottom,
+          paddingBottom: insets.bottom,
         },
-        tabBarBackground: () => <TabBarBackground />,
+
+        tabBarBackground: () => (
+          <TabBarBackground bottom={insets.bottom} isDark={isDark} />
+        ),
       }}
     >
       {/* Home */}
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Home babu",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
 
       {/* Report */}
       <Tabs.Screen
-        name="report"
+        name="reports"
         options={{
-          title: "Report",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "bar-chart" : "bar-chart-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
 
-      {/* Center Add Button */}
+      {/* CENTER FAB */}
       <Tabs.Screen
         name="add"
         options={{
-          title: "",
           tabBarIcon: () => (
-            <TouchableOpacity
-              className="w-14 h-14 rounded-full bg-purple-600 justify-center items-center -mt-8 shadow-lg"
-              onPress={() => router.push("/add")}
+            <Animated.View
+              style={{
+                transform: [{ scale }],
+                top: -15,
+              }}
             >
-              <Ionicons name="add" size={30} color="#fff" />
-            </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => router.push("/add")}
+                onPressIn={pressIn}
+                onPressOut={pressOut}
+                className="w-14 h-14 rounded-full justify-center items-center"
+                style={{
+                  backgroundColor: theme.primary,
+
+                  /* glow adaptive */
+                  shadowColor: theme.primary,
+                  shadowOpacity: isDark ? 0.7 : 0.4,
+                  shadowRadius: isDark ? 18 : 12,
+                  shadowOffset: { width: 0, height: 8 },
+                  elevation: 18,
+                }}
+              >
+                <Ionicons name="add" size={30} color="#fff" />
+              </TouchableOpacity>
+            </Animated.View>
           ),
         }}
       />
 
-      {/* Plan */}
+      {/* Planner */}
       <Tabs.Screen
         name="planner"
         options={{
-          title: "Planner",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "wallet" : "wallet-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
@@ -80,9 +163,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "settings" : "settings-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />

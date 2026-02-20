@@ -43,7 +43,7 @@ export default function AddTransaction() {
       year: "numeric",
     });
 
-    const response = await fetch("http://localhost:8000/transactions", {
+    const response = await fetch("http://192.168.10.35:8081/transactions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -91,18 +91,16 @@ export default function AddTransaction() {
           {["Income", "Expense", "Investment"].map((tab) => (
             <TouchableOpacity
               key={tab}
-              className={`w-[31%] py-2.5 rounded-full items-center shadow ${
-                activeTab === tab ? "bg-[#7C5CFC]" : "bg-white"
-              }`}
+              className={`w-[31%] py-2.5 rounded-full items-center shadow ${activeTab === tab ? "bg-[#7C5CFC]" : "bg-white"
+                }`}
               onPress={() => {
                 setActiveTab(tab as TabType);
                 setSelectedTag("");
               }}
             >
               <Text
-                className={`font-semibold ${
-                  activeTab === tab ? "text-white" : "text-gray-600"
-                }`}
+                className={`font-semibold ${activeTab === tab ? "text-white" : "text-gray-600"
+                  }`}
               >
                 {tab}
               </Text>
@@ -150,19 +148,17 @@ export default function AddTransaction() {
             {["Cash", "UPI", "Bank", "Card"].map((type) => (
               <TouchableOpacity
                 key={type}
-                className={`py-1.5 px-3.5 rounded-full mr-2 mb-2 ${
-                  transactionType === type
+                className={`py-1.5 px-3.5 rounded-full mr-2 mb-2 ${transactionType === type
                     ? "bg-[#7C5CFC]"
                     : "bg-gray-200"
-                }`}
+                  }`}
                 onPress={() => setTransactionType(type)}
               >
                 <Text
-                  className={`text-xs ${
-                    transactionType === type
+                  className={`text-xs ${transactionType === type
                       ? "text-white"
                       : "text-gray-700"
-                  }`}
+                    }`}
                 >
                   {type}
                 </Text>
