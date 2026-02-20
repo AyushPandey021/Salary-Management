@@ -8,8 +8,12 @@ import {
   ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+;
+
+import { ThemeContext } from "../../src/context/ThemeContext";
+
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -20,7 +24,153 @@ type Transaction = {
   month: string;
 };
 
+// export default function Planner() {
+//   const [activeType, setActiveType] = useState<
+//     "Income" | "Expense" | "Investment"
+//   >("Expense");
+
+//   const [budget, setBudget] = useState("");
+//   const [usedAmount, setUsedAmount] = useState(0);
+
+//   const getCurrentMonth = () => {
+//     const now = new Date();
+//     return now.toLocaleString("default", {
+//       month: "long",
+//       year: "numeric",
+//     });
+//   };
+
+//   const selectedMonth = getCurrentMonth();
+
+//   // 🔥 Fetch Real Data
+//   const fetchTransactions = async () => {
+//     const token = await AsyncStorage.getItem("token");
+
+//     const response = await fetch(
+//       `http://localhost:8000/transactions?month=${selectedMonth}`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       }
+//     );
+
+//     const data: Transaction[] = await response.json();
+
+//     const filtered = data.filter(
+//       (item) => item.type === activeType
+//     );
+
+//     let total = 0;
+//     filtered.forEach((item) => {
+//       total += item.amount;
+//     });
+
+//     setUsedAmount(total);
+//   };
+
+//   useEffect(() => {
+//     fetchTransactions();
+//   }, [activeType]);
+
+//   const numericBudget = Number(budget);
+//   const remaining = numericBudget - usedAmount;
+//   const percentage =
+//     numericBudget > 0
+//       ? Math.min((usedAmount / numericBudget) * 100, 100)
+//       : 0;
+
+//   return (
+//     <ScrollView style={styles.container}>
+//       <LinearGradient
+//         colors={["#7C5CFC", "#5F2EEA"]}
+//         style={styles.header}
+//       >
+//         <Text style={styles.title}>Monthly Planner</Text>
+//         <Text style={styles.month}>{selectedMonth}</Text>
+//       </LinearGradient>
+
+//       {/* 🔥 Type Switch */}
+//       <View style={styles.switchContainer}>
+//         {["Income", "Expense", "Investment"].map((type) => (
+//           <TouchableOpacity
+//             key={type}
+//             style={[
+//               styles.switchBtn,
+//               activeType === type && styles.activeSwitch,
+//             ]}
+//             onPress={() => setActiveType(type as any)}
+//           >
+//             <Text
+//               style={[
+//                 styles.switchText,
+//                 activeType === type && { color: "#fff" },
+//               ]}
+//             >
+//               {type}
+//             </Text>
+//           </TouchableOpacity>
+//         ))}
+//       </View>
+
+//       {/* 🔥 Budget Card */}
+//       <View style={styles.card}>
+//         <Text style={styles.label}>
+//           Set Monthly {activeType} Budget
+//         </Text>
+
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter Budget Amount"
+//           keyboardType="numeric"
+//           value={budget}
+//           onChangeText={setBudget}
+//         />
+
+//         <View style={styles.stats}>
+//           <Text>Used: ₹ {usedAmount}</Text>
+//           <Text>
+//             Remaining: ₹{" "}
+//             {remaining >= 0 ? remaining : 0}
+//           </Text>
+//         </View>
+
+//         {/* 🔥 Progress Bar */}
+//         <View style={styles.progressBackground}>
+//           <View
+//             style={[
+//               styles.progressFill,
+//               {
+//                 width: `${percentage}%`,
+//                 backgroundColor:
+//                   percentage > 100
+//                     ? "#ff5c5c"
+//                     : percentage > 80
+//                       ? "#FFC107"
+//                       : "#4CAF50",
+//               },
+//             ]}
+//           />
+//         </View>
+
+//         <Text style={styles.percentage}>
+//           {percentage.toFixed(1)}%
+//         </Text>
+
+//         {/* 🔥 Exceeded Warning */}
+//         {remaining < 0 && (
+//           <Text style={styles.warning}>
+//             ⚠ Budget Exceeded by ₹{" "}
+//             {Math.abs(remaining)}
+//           </Text>
+//         )}
+//       </View>
+//     </ScrollView>
+//   );
+// }
 export default function Planner() {
+  const { theme, isDark } = useContext(ThemeContext);
+
   const [activeType, setActiveType] = useState<
     "Income" | "Expense" | "Investment"
   >("Expense");
@@ -38,7 +188,6 @@ export default function Planner() {
 
   const selectedMonth = getCurrentMonth();
 
-  // 🔥 Fetch Real Data
   const fetchTransactions = async () => {
     const token = await AsyncStorage.getItem("token");
 
@@ -71,13 +220,17 @@ export default function Planner() {
 
   const numericBudget = Number(budget);
   const remaining = numericBudget - usedAmount;
+
   const percentage =
     numericBudget > 0
       ? Math.min((usedAmount / numericBudget) * 100, 100)
       : 0;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.background }}
+    >
+      {/* 🔥 Header */}
       <LinearGradient
         colors={["#7C5CFC", "#5F2EEA"]}
         style={styles.header}
@@ -86,46 +239,79 @@ export default function Planner() {
         <Text style={styles.month}>{selectedMonth}</Text>
       </LinearGradient>
 
-      {/* 🔥 Type Switch */}
+      {/* 🔥 Switch */}
       <View style={styles.switchContainer}>
-        {["Income", "Expense", "Investment"].map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={[
-              styles.switchBtn,
-              activeType === type && styles.activeSwitch,
-            ]}
-            onPress={() => setActiveType(type as any)}
-          >
-            <Text
+        {["Income", "Expense", "Investment"].map(
+          (type) => (
+            <TouchableOpacity
+              key={type}
               style={[
-                styles.switchText,
-                activeType === type && { color: "#fff" },
+                styles.switchBtn,
+                {
+                  backgroundColor:
+                    activeType === type
+                      ? theme.primary
+                      : theme.card,
+                },
               ]}
+              onPress={() =>
+                setActiveType(type as any)
+              }
             >
-              {type}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={{
+                  fontWeight: "600",
+                  color:
+                    activeType === type
+                      ? "#fff"
+                      : theme.text,
+                }}
+              >
+                {type}
+              </Text>
+            </TouchableOpacity>
+          )
+        )}
       </View>
 
       {/* 🔥 Budget Card */}
-      <View style={styles.card}>
-        <Text style={styles.label}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: theme.card },
+        ]}
+      >
+        <Text
+          style={[
+            styles.label,
+            { color: theme.text },
+          ]}
+        >
           Set Monthly {activeType} Budget
         </Text>
 
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: isDark
+                ? "#2A2A2A"
+                : "#f2f3f7",
+              color: theme.text,
+            },
+          ]}
           placeholder="Enter Budget Amount"
+          placeholderTextColor={theme.subText}
           keyboardType="numeric"
           value={budget}
           onChangeText={setBudget}
         />
 
         <View style={styles.stats}>
-          <Text>Used: ₹ {usedAmount}</Text>
-          <Text>
+          <Text style={{ color: theme.text }}>
+            Used: ₹ {usedAmount}
+          </Text>
+          <Text style={{ color: theme.text }}>
             Remaining: ₹{" "}
             {remaining >= 0 ? remaining : 0}
           </Text>
@@ -139,9 +325,9 @@ export default function Planner() {
               {
                 width: `${percentage}%`,
                 backgroundColor:
-                  percentage > 100
+                  percentage >= 100
                     ? "#ff5c5c"
-                    : percentage > 80
+                    : percentage >= 80
                       ? "#FFC107"
                       : "#4CAF50",
               },
@@ -149,11 +335,15 @@ export default function Planner() {
           />
         </View>
 
-        <Text style={styles.percentage}>
+        <Text
+          style={[
+            styles.percentage,
+            { color: theme.text },
+          ]}
+        >
           {percentage.toFixed(1)}%
         </Text>
 
-        {/* 🔥 Exceeded Warning */}
         {remaining < 0 && (
           <Text style={styles.warning}>
             ⚠ Budget Exceeded by ₹{" "}
@@ -164,6 +354,7 @@ export default function Planner() {
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

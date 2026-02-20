@@ -144,53 +144,53 @@ export default function Reports() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      
+
       {/* 🔥 Header */}
- <LinearGradient
-  colors={["#7C5CFC", "#5F2EEA"]}
-  style={styles.header}
->
-  <View style={styles.headerTop}>
-    <Text style={styles.title}>Reports</Text>
+      <LinearGradient
+        colors={["#7C5CFC", "#5F2EEA"]}
+        style={styles.header}
+      >
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Reports</Text>
 
-    {/* Calendar Button */}
-    <TouchableOpacity style={styles.calendarBtn}>
-      <Ionicons name="calendar-outline" size={20} color="#fff" />
-      <Text style={styles.calendarText}>Select Date</Text>
-    </TouchableOpacity>
-  </View>
+          {/* Calendar Button */}
+          <TouchableOpacity style={styles.calendarBtn}>
+            <Ionicons name="calendar-outline" size={20} color="#fff" />
+            <Text style={styles.calendarText}>Select Date</Text>
+          </TouchableOpacity>
+        </View>
 
-  {/* Horizontal Months Scroll */}
-  <FlatList
-    data={months}
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    keyExtractor={(item) => item}
-    contentContainerStyle={{ paddingTop: 15 }}
-    renderItem={({ item }) => {
-      const isActive = selectedMonth === item;
+        {/* Horizontal Months Scroll */}
+        <FlatList
+          data={months}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item}
+          contentContainerStyle={{ paddingTop: 15 }}
+          renderItem={({ item }) => {
+            const isActive = selectedMonth === item;
 
-      return (
-        <TouchableOpacity
-          style={[
-            styles.monthChip,
-            isActive && styles.activeMonthChip,
-          ]}
-          onPress={() => setSelectedMonth(item)}
-        >
-          <Text
-            style={[
-              styles.monthText,
-              isActive && styles.activeMonthText,
-            ]}
-          >
-            {item.split(" ")[0]} {/* Only month name */}
-          </Text>
-        </TouchableOpacity>
-      );
-    }}
-  />
-</LinearGradient>
+            return (
+              <TouchableOpacity
+                style={[
+                  styles.monthChip,
+                  isActive && styles.activeMonthChip,
+                ]}
+                onPress={() => setSelectedMonth(item)}
+              >
+                <Text
+                  style={[
+                    styles.monthText,
+                    isActive && styles.activeMonthText,
+                  ]}
+                >
+                  {item.split(" ")[0]} {/* Only month name */}
+                </Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </LinearGradient>
 
 
       {/* 🔥 Switch Buttons */}
@@ -219,66 +219,66 @@ export default function Reports() {
       </View>
 
       {/* 🔥 Chart Section */}
- <View style={styles.chartContainer}>
-  <Text style={styles.sectionTitle}>
-    {activeType} Distribution
-  </Text>
+      <View style={styles.chartContainer}>
+        <Text style={styles.sectionTitle}>
+          {activeType} Distribution
+        </Text>
 
-  {chartData.length > 0 ? (
-    <>
-      <PieChart
-        data={chartData}
-        width={screenWidth - 40}
-        height={220}
-        accessor="amount"
-        backgroundColor="transparent"
-        paddingLeft="15"
-        absolute
-        chartConfig={{
-          backgroundGradientFrom: "#fff",
-          backgroundGradientTo: "#fff",
-          color: (opacity = 1) =>
-            `rgba(0,0,0, ${opacity})`,
-        }}
-      />
+        {chartData.length > 0 ? (
+          <>
+            <PieChart
+              data={chartData}
+              width={screenWidth - 40}
+              height={220}
+              accessor="amount"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
+              chartConfig={{
+                backgroundGradientFrom: "#fff",
+                backgroundGradientTo: "#fff",
+                color: (opacity = 1) =>
+                  `rgba(0,0,0, ${opacity})`,
+              }}
+            />
 
-      {/* 🔥 Percentage Legend */}
-      <View style={{ marginTop: 20 }}>
-        {chartData.map((item, index) => (
-          <View
-            key={index}
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginBottom: 8,
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  backgroundColor: item.color,
-                  borderRadius: 6,
-                  marginRight: 8,
-                }}
-              />
-              <Text>{item.name}</Text>
+            {/* 🔥 Percentage Legend */}
+            <View style={{ marginTop: 20 }}>
+              {chartData.map((item, index) => (
+                <View
+                  key={index}
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginBottom: 8,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        backgroundColor: item.color,
+                        borderRadius: 6,
+                        marginRight: 8,
+                      }}
+                    />
+                    <Text>{item.name}</Text>
+                  </View>
+
+                  <Text style={{ fontWeight: "bold" }}>
+                    {item.percentage}%
+                  </Text>
+                </View>
+              ))}
             </View>
-
-            <Text style={{ fontWeight: "bold" }}>
-              {item.percentage}%
-            </Text>
-          </View>
-        ))}
+          </>
+        ) : (
+          <Text style={{ textAlign: "center", marginTop: 40 }}>
+            No Data Available
+          </Text>
+        )}
       </View>
-    </>
-  ) : (
-    <Text style={{ textAlign: "center", marginTop: 40 }}>
-      No Data Available
-    </Text>
-  )}
-</View>
 
     </ScrollView>
   );
@@ -337,57 +337,51 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
-  header: {
-  paddingTop: 50,
-  paddingHorizontal: 20,
-  paddingBottom: 20,
-  borderBottomLeftRadius: 35,
-  borderBottomRightRadius: 35,
-},
+  //  
 
-headerTop: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-},
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
 
-title: {
-  fontSize: 22,
-  fontWeight: "bold",
-  color: "#fff",
-},
+  // title: {
+  //   fontSize: 22,
+  //   fontWeight: "bold",
+  //   color: "#fff",
+  // },
 
-calendarBtn: {
-  flexDirection: "row",
-  alignItems: "center",
-},
+  calendarBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
 
-calendarText: {
-  color: "#fff",
-  marginLeft: 6,
-  fontSize: 14,
-},
+  calendarText: {
+    color: "#fff",
+    marginLeft: 6,
+    fontSize: 14,
+  },
 
-monthChip: {
-  paddingVertical: 8,
-  paddingHorizontal: 16,
-  borderRadius: 20,
-  backgroundColor: "rgba(255,255,255,0.2)",
-  marginRight: 10,
-},
+  monthChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    marginRight: 10,
+  },
 
-activeMonthChip: {
-  backgroundColor: "#fff",
-},
+  activeMonthChip: {
+    backgroundColor: "#fff",
+  },
 
-monthText: {
-  color: "#fff",
-  fontWeight: "500",
-},
+  monthText: {
+    color: "#fff",
+    fontWeight: "500",
+  },
 
-activeMonthText: {
-  color: "#7C5CFC",
-  fontWeight: "bold",
-},
+  activeMonthText: {
+    color: "#7C5CFC",
+    fontWeight: "bold",
+  },
 
 });

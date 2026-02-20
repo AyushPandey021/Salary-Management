@@ -11,21 +11,21 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Dashboard() {
   const currentDate = new Date();
-function generateMonths(year) {
-  return Array.from({ length: 12 }, (_, i) =>
-    new Date(year, i).toLocaleString("default", {
+  function generateMonths(year) {
+    return Array.from({ length: 12 }, (_, i) =>
+      new Date(year, i).toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      })
+    );
+  }
+  const [selectedMonth, setSelectedMonth] = useState(
+    currentDate.toLocaleString("default", {
       month: "long",
       year: "numeric",
     })
   );
-}
-const [selectedMonth, setSelectedMonth] = useState(
-  currentDate.toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  })
-);
-const currentYear = currentDate.getFullYear();
+  const currentYear = currentDate.getFullYear();
 
 
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
@@ -34,13 +34,13 @@ const currentYear = currentDate.getFullYear();
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
   const [investment, setInvestment] = useState(0);
-   
+
 
   const [months, setMonths] = useState(generateMonths(currentYear));
-  
 
 
-const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
   const balance = income - expense - investment;
 
@@ -57,11 +57,11 @@ const [selectedYear, setSelectedYear] = useState(currentYear);
   };
 
 
-useEffect(() => {
-  const newMonths = generateMonths(selectedYear);
-  setMonths(newMonths);
-  setSelectedMonth(newMonths[new Date().getMonth()]);
-}, [selectedYear]);
+  useEffect(() => {
+    const newMonths = generateMonths(selectedYear);
+    setMonths(newMonths);
+    setSelectedMonth(newMonths[new Date().getMonth()]);
+  }, [selectedYear]);
 
 
 
@@ -84,7 +84,7 @@ useEffect(() => {
     let totalExpense = 0;
     let totalInvestment = 0;
 
-data.forEach((item) => {
+    data.forEach((item) => {
 
       if (item.type === "Income") totalIncome += item.amount;
       if (item.type === "Expense") totalExpense += item.amount;
@@ -121,17 +121,17 @@ data.forEach((item) => {
             style={styles.monthContainer}
             onPress={() => setShowMonthDropdown(true)}
           >
-<View style={styles.monthRow}>
-  <Text style={styles.monthText}>{selectedMonth}</Text>
+            <View style={styles.monthRow}>
+              <Text style={styles.monthText}>{selectedMonth}</Text>
 
-  <TouchableOpacity
-    onPress={() => setShowMonthDropdown(true)}
-    style={styles.calendarBtn}
-  >
-    <Ionicons name="calendar-outline" size={20} color="#fff" />
-  </TouchableOpacity>
-</View>
-  </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowMonthDropdown(true)}
+                style={styles.calendarBtn}
+              >
+                <Ionicons name="calendar-outline" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
 
 
         </View>
@@ -145,39 +145,40 @@ data.forEach((item) => {
         data={transactions}
         keyExtractor={(item) => item._id || Math.random().toString()}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 150 }}
+        style={{ flex: 1 }}
 
         ListHeaderComponent={
-          <>
-            <View style={styles.body}>
-              <Text style={styles.sectionTitle}>Your Money</Text>
+          <View style={styles.body}>
+            <Text style={styles.sectionTitle}>Your Money</Text>
 
-              <View style={styles.fullCard}>
-                <Text style={styles.cardLabel}>Income</Text>
-                <Text style={styles.cardAmount}>₹ {income}</Text>
-              </View>
-
-              <View style={styles.row}>
-                <View style={styles.halfCard}>
-                  <Text style={styles.cardLabel}>Expenses</Text>
-                  <Text style={styles.expenseAmount}>₹ {expense}</Text>
-                </View>
-
-                <View style={styles.halfCard}>
-                  <Text style={styles.cardLabel}>Investment</Text>
-                  <Text style={styles.investAmount}>₹ {investment}</Text>
-                </View>
-              </View>
-
-              <Text style={{ marginTop: 25, fontWeight: "bold", fontSize: 16 }}>
-                Recent Transactions
-              </Text>
+            <View style={styles.fullCard}>
+              <Text style={styles.cardLabel}>Income</Text>
+              <Text style={styles.cardAmount}>₹ {income}</Text>
             </View>
-          </>
+
+            <View style={styles.row}>
+              <View style={styles.halfCard}>
+                <Text style={styles.cardLabel}>Expenses</Text>
+                <Text style={styles.expenseAmount}>₹ {expense}</Text>
+              </View>
+
+              <View style={styles.halfCard}>
+                <Text style={styles.cardLabel}>Investment</Text>
+                <Text style={styles.investAmount}>₹ {investment}</Text>
+              </View>
+            </View>
+
+            <Text style={{ marginTop: 25, fontWeight: "bold", fontSize: 16 }}>
+              Recent Transactions
+            </Text>
+          </View>
         }
 
         renderItem={({ item }) => {
           const isExpense = item.type === "Expense";
+          const isIncome = item.type === "Income";
+          const isInvestment = item.type === "Investment";
 
           const formattedDate =
             item.created_at && !isNaN(Date.parse(item.created_at))
@@ -186,58 +187,55 @@ data.forEach((item) => {
 
           return (
             <View style={styles.transactionCard}>
+
+              {/* Left Section */}
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: "bold" }}>{item.title}</Text>
+
+                <Text style={styles.transactionTitle}>
+                  {item.title}
+                </Text>
+
+                {/* Tag Badge */}
+                <View
+                  style={[
+                    styles.tagBadge,
+                    isIncome && styles.incomeTag,
+                    isExpense && styles.expenseTag,
+                    isInvestment && styles.investmentTag,
+                  ]}
+                >
+                  <Text style={styles.tagText}>
+                    {item.type}
+                  </Text>
+                </View>
+
                 {formattedDate !== "" && (
-                  <Text style={{ fontSize: 12, color: "#777" }}>
+                  <Text style={styles.dateText}>
                     {formattedDate}
                   </Text>
                 )}
               </View>
 
+              {/* Right Amount */}
               <Text
-                style={{
-                  color: isExpense ? "#ff5c5c" : "#4CAF50",
-                  fontWeight: "bold",
-                  fontSize: 16,
-                }}
+                style={[
+                  styles.amountText,
+                  isExpense && { color: "#ff5c5c" },
+                  isIncome && { color: "#4CAF50" },
+                  isInvestment && { color: "#2196F3" },
+                ]}
               >
                 ₹ {item.amount}
               </Text>
+
             </View>
           );
         }}
       />
 
+
       {/* 🔥 Bottom Section */}
-      <View style={styles.body}>
-        <Text style={styles.sectionTitle}>Your Money</Text>
 
-        {/* Income Full Width */}
-        <View style={styles.fullCard}>
-          <Text style={styles.cardLabel}>Income</Text>
-          <Text style={styles.cardAmount}>₹ {income}</Text>
-
-        </View>
-
-        {/* Expense + Investment Row */}
-        <View style={styles.row}>
-          <View style={styles.halfCard}>
-            <Text style={styles.cardLabel}>Expenses</Text>
-            <Text style={styles.expenseAmount}>₹ {expense}</Text>
-
-          </View>
-
-          <View style={styles.halfCard}>
-            <Text style={styles.cardLabel}>Investment</Text>
-            <Text style={styles.investAmount}>₹ {investment}</Text>
-
-          </View>
-        </View>
-
-
-
-      </View>
       {/* Recent Trasaction  */}
 
 
@@ -245,51 +243,51 @@ data.forEach((item) => {
 
 
       {/* 🔥 Month Dropdown Modal */}
-   <Modal visible={showMonthDropdown} transparent animationType="slide">
-  <View style={styles.modalOverlay}>
-    <View style={styles.dropdown}>
+      <Modal visible={showMonthDropdown} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.dropdown}>
 
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 15 }}>
-        <TouchableOpacity onPress={() => setSelectedYear(selectedYear - 1)}>
-          <Ionicons name="chevron-back" size={24} />
-        </TouchableOpacity>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 15 }}>
+              <TouchableOpacity onPress={() => setSelectedYear(selectedYear - 1)}>
+                <Ionicons name="chevron-back" size={24} />
+              </TouchableOpacity>
 
-        <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-          {selectedYear}
-        </Text>
+              <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                {selectedYear}
+              </Text>
 
-        <TouchableOpacity onPress={() => setSelectedYear(selectedYear + 1)}>
-          <Ionicons name="chevron-forward" size={24} />
-        </TouchableOpacity>
-      </View>
+              <TouchableOpacity onPress={() => setSelectedYear(selectedYear + 1)}>
+                <Ionicons name="chevron-forward" size={24} />
+              </TouchableOpacity>
+            </View>
 
-      <FlatList
-        data={months}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.monthItem}
-            onPress={() => {
-              setSelectedMonth(item);
-              setShowMonthDropdown(false);
-            }}
-          >
-            <Text>{item}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-  <View style={{ alignItems: "center", marginTop: 40 }}>
-    <Ionicons name="document-outline" size={40} color="#ccc" />
-    <Text style={{ marginTop: 10, color: "#777" }}>
-      No Data Available
-    </Text>
-  </View>
-}
+            <FlatList
+              data={months}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.monthItem}
+                  onPress={() => {
+                    setSelectedMonth(item);
+                    setShowMonthDropdown(false);
+                  }}
+                >
+                  <Text>{item}</Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <View style={{ alignItems: "center", marginTop: 40 }}>
+                  <Ionicons name="document-outline" size={40} color="#ccc" />
+                  <Text style={{ marginTop: 10, color: "#777" }}>
+                    No Data Available
+                  </Text>
+                </View>
+              }
 
-      />
-    </View>
-  </View>
-</Modal>
+            />
+          </View>
+        </View>
+      </Modal>
 
 
       {/* 🔥 Profile Modal */}
@@ -318,6 +316,7 @@ data.forEach((item) => {
 }
 
 const styles = StyleSheet.create({
+
   header: {
     height: 250,
     padding: 25,
@@ -350,7 +349,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   balanceLabel: {
-    alignItems:"center",
+    alignItems: "center",
     marginTop: 40,
     color: "#fff",
     fontSize: 16,
@@ -455,14 +454,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-monthRow: {
-  flexDirection: "row",
-  alignItems: "center",
-},
+  monthRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
 
-calendarBtn: {
-  marginLeft: 10,
-},
+  calendarBtn: {
+    marginLeft: 10,
+  },
 
   halfCard: {
     width: "48%",
@@ -495,5 +494,59 @@ calendarBtn: {
     alignItems: "center",
     elevation: 3,
   },
+  transactionCard: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 4,
+  },
+
+  transactionTitle: {
+    fontWeight: "bold",
+    fontSize: 15,
+    marginBottom: 6,
+  },
+
+  amountText: {
+    fontSize: 17,
+    fontWeight: "bold",
+  },
+
+  dateText: {
+    fontSize: 12,
+    color: "#777",
+    marginTop: 4,
+  },
+
+  tagBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+
+  tagText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+
+  incomeTag: {
+    backgroundColor: "#4CAF50",
+  },
+
+  expenseTag: {
+    backgroundColor: "#ff5c5c",
+  },
+
+  investmentTag: {
+    backgroundColor: "#2196F3",
+  },
+
 
 });

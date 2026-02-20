@@ -30,43 +30,43 @@ export default function AuthScreen() {
     outputRange: [0, (width * 0.9 - 60) / 2],
   });
 
-const handleAuth = async () => {
-  try {
-    const endpoint = isLogin ? "login" : "signup";
+  const handleAuth = async () => {
+    try {
+      const endpoint = isLogin ? "login" : "signup";
 
-    const response = await fetch(`${BASE_URL}/auth/${endpoint}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(
-        isLogin
-          ? { email, password }
-          : { name, email, password }
-      ),
-    });
+      const response = await fetch(`${BASE_URL}/auth/${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          isLogin
+            ? { email, password }
+            : { name, email, password }
+        ),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      if (isLogin) {
-        // 🔥 STORE TOKEN
-        await AsyncStorage.setItem("token", data.access_token);
+      if (response.ok) {
+        if (isLogin) {
+          // 🔥 STORE TOKEN
+          await AsyncStorage.setItem("token", data.access_token);
 
-        Alert.alert("Success 🎉", "Login Successfully!");
+          Alert.alert("Success 🎉", "Login Successfully!");
 
-        router.replace("/dashboard");
+          router.replace("/dashboard");
+        } else {
+          Alert.alert("Success 🎉", "Signup Successfully! Please Login.");
+          setIsLogin(true);
+        }
       } else {
-        Alert.alert("Success 🎉", "Signup Successfully! Please Login.");
-        setIsLogin(true);
+        Alert.alert("Error ❌", data.detail || "Something went wrong");
       }
-    } else {
-      Alert.alert("Error ❌", data.detail || "Something went wrong");
+    } catch (error) {
+      Alert.alert("Network Error ❌", "Check your backend server");
     }
-  } catch (error) {
-    Alert.alert("Network Error ❌", "Check your backend server");
-  }
-};
+  };
 
   return (
     <LinearGradient

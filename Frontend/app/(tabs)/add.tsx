@@ -18,9 +18,9 @@ const { width } = Dimensions.get("window");
 
 
 export default function AddTransaction() {
-type TabType = "Income" | "Expense" | "Investment";
+  type TabType = "Income" | "Expense" | "Investment";
 
-const [activeTab, setActiveTab] = useState<TabType>("Income");
+  const [activeTab, setActiveTab] = useState<TabType>("Income");
 
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
@@ -29,56 +29,56 @@ const [activeTab, setActiveTab] = useState<TabType>("Income");
   const [selectedTag, setSelectedTag] = useState("");
   //   const [selectedTag, setSelectedTag] = useState("");
   const [showTagModal, setShowTagModal] = useState(false);
-const [customTags, setCustomTags] = useState<string[]>([]);
+  const [customTags, setCustomTags] = useState<string[]>([]);
 
 
-const tagOptions: Record<TabType, string[]> = {
-  Income: ["Salary", "Freelance", "Bonus", "Side Income"],
-  Expense: ["Eating Out", "Shopping", "Movie", "Gym"],
-  Investment: ["SIP", "Insurance", "Stocks", "Crypto"],
-};
+  const tagOptions: Record<TabType, string[]> = {
+    Income: ["Salary", "Freelance", "Bonus", "Side Income"],
+    Expense: ["Eating Out", "Shopping", "Movie", "Gym"],
+    Investment: ["SIP", "Insurance", "Stocks", "Crypto"],
+  };
 
-const handleSave = async () => {
-  if (!title || !amount) {
-    alert("Please fill required fields");
-    return;
-  }
+  const handleSave = async () => {
+    if (!title || !amount) {
+      alert("Please fill required fields");
+      return;
+    }
 
-  const token = await AsyncStorage.getItem("token");
+    const token = await AsyncStorage.getItem("token");
 
-  const now = new Date();
-  const month = now.toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
+    const now = new Date();
+    const month = now.toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    });
 
-  const response = await fetch("http://localhost:8000/transactions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      type: activeTab,
-      title,
-      amount: Number(amount),
-      tag: selectedTag,
-      payment_method: transactionType,
-      description,
-      month,
-    }),
-  });
+    const response = await fetch("http://localhost:8000/transactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        type: activeTab,
+        title,
+        amount: Number(amount),
+        tag: selectedTag,
+        payment_method: transactionType,
+        description,
+        month,
+      }),
+    });
 
-  if (response.ok) {
-    alert("Transaction Added Successfully 🎉");
-    setTitle("");
-    setAmount("");
-    setDescription("");
-    setSelectedTag("");
-  } else {
-    alert("Something went wrong ❌");
-  }
-};
+    if (response.ok) {
+      alert("Transaction Added Successfully 🎉");
+      setTitle("");
+      setAmount("");
+      setDescription("");
+      setSelectedTag("");
+    } else {
+      alert("Something went wrong ❌");
+    }
+  };
 
 
 
@@ -142,18 +142,18 @@ const handleSave = async () => {
           />
 
 
-{/* 🔥 Tag Selector */}
-<Text style={styles.label}>Tag</Text>
+          {/* 🔥 Tag Selector */}
+          <Text style={styles.label}>Tag</Text>
 
-<TouchableOpacity
-  style={styles.tagSelector}
-  onPress={() => setShowTagModal(true)}
->
-  <Text style={{ color: selectedTag ? "#000" : "#999" }}>
-    {selectedTag || "Select Tag"}
-  </Text>
-  <Ionicons name="chevron-down" size={18} color="#555" />
-</TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tagSelector}
+            onPress={() => setShowTagModal(true)}
+          >
+            <Text style={{ color: selectedTag ? "#000" : "#999" }}>
+              {selectedTag || "Select Tag"}
+            </Text>
+            <Ionicons name="chevron-down" size={18} color="#555" />
+          </TouchableOpacity>
 
 
           {/* </View> */}
@@ -191,7 +191,7 @@ const handleSave = async () => {
           />
 
           {/* Save */}
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+          <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
 
             <Text style={styles.saveText}>
               Save {activeTab}
@@ -201,46 +201,46 @@ const handleSave = async () => {
         </View>
 
       </ScrollView>
-      
-     <Modal visible={showTagModal} transparent animationType="slide">
-  <View style={styles.modalOverlay}>
-    <View style={styles.tagModal}>
-      <Text style={styles.modalTitle}>Select Tag</Text>
 
-      <ScrollView>
-        {[...tagOptions[activeTab], ...customTags].map((tag) => (
-          <TouchableOpacity
-            key={tag}
-            style={styles.modalTagItem}
-            onPress={() => {
-              setSelectedTag(tag);
-              setShowTagModal(false);
-            }}
-          >
-            <Text>{tag}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <Modal visible={showTagModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.tagModal}>
+            <Text style={styles.modalTitle}>Select Tag</Text>
 
-      <TouchableOpacity
-        style={styles.addTagBtn}
-        onPress={() => {
-          const newTag = "New Tag " + (customTags.length + 1);
-          setCustomTags([...customTags, newTag]);
-        }}
-      >
-        <Text style={{ color: "#fff" }}>+ Add Tag</Text>
-      </TouchableOpacity>
+            <ScrollView>
+              {[...tagOptions[activeTab], ...customTags].map((tag) => (
+                <TouchableOpacity
+                  key={tag}
+                  style={styles.modalTagItem}
+                  onPress={() => {
+                    setSelectedTag(tag);
+                    setShowTagModal(false);
+                  }}
+                >
+                  <Text>{tag}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-      <TouchableOpacity
-        style={styles.closeBtn}
-        onPress={() => setShowTagModal(false)}
-      >
-        <Text>Close</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
+            <TouchableOpacity
+              style={styles.addTagBtn}
+              onPress={() => {
+                const newTag = "New Tag " + (customTags.length + 1);
+                setCustomTags([...customTags, newTag]);
+              }}
+            >
+              <Text style={{ color: "#fff" }}>+ Add Tag</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={() => setShowTagModal(false)}
+            >
+              <Text>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

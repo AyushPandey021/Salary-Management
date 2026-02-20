@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Switch,
   ScrollView,
@@ -34,12 +33,10 @@ export default function Settings() {
     subText: isDark ? "#aaaaaa" : "#777777",
   };
 
-  // 🔥 Fetch User + Stats
   const fetchData = async () => {
     const token = await AsyncStorage.getItem("token");
 
     try {
-      // Fetch User
       const userRes = await fetch(
         "http://localhost:8000/auth/me",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -47,7 +44,6 @@ export default function Settings() {
       const userData = await userRes.json();
       setUser(userData);
 
-      // Fetch All Transactions
       const transRes = await fetch(
         "http://localhost:8000/transactions/all",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -71,7 +67,6 @@ export default function Settings() {
         expense,
         investment,
       });
-
     } catch (err) {
       console.log(err);
     } finally {
@@ -103,25 +98,27 @@ export default function Settings() {
   };
 
   return (
-    <ScrollView style={{ backgroundColor: theme.background, flex: 1 }}>
+    <ScrollView className="flex-1" style={{ backgroundColor: theme.background }}>
 
-      {/* 🔥 Header */}
+      {/* Header */}
       <LinearGradient
         colors={["#7C5CFC", "#5F2EEA"]}
-        style={styles.header}
+        className="pt-14 pb-7 px-5 rounded-b-3xl"
       >
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text className="text-white text-2xl font-bold">
+          Settings
+        </Text>
       </LinearGradient>
 
-      {/* 👤 Profile Section */}
-      <View style={[styles.card, { backgroundColor: theme.card }]}>
+      {/* Profile */}
+      <View className="mx-5 mt-5 p-5 rounded-2xl shadow" style={{ backgroundColor: theme.card }}>
         {loading ? (
           <ActivityIndicator size="large" color="#7C5CFC" />
         ) : (
-          <View style={styles.row}>
+          <View className="flex-row items-center">
             <Ionicons name="person-circle-outline" size={60} color="#7C5CFC" />
-            <View style={{ marginLeft: 15 }}>
-              <Text style={[styles.title, { color: theme.text }]}>
+            <View className="ml-4">
+              <Text className="text-lg font-bold" style={{ color: theme.text }}>
                 {user?.name}
               </Text>
               <Text style={{ color: theme.subText }}>
@@ -132,81 +129,75 @@ export default function Settings() {
         )}
       </View>
 
-      {/* 📊 History & Stats */}
-      <View style={[styles.card, { backgroundColor: theme.card }]}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+      {/* Stats */}
+      <View className="mx-5 mt-5 p-5 rounded-2xl shadow" style={{ backgroundColor: theme.card }}>
+        <Text className="font-bold mb-2" style={{ color: theme.text }}>
           Account History
         </Text>
 
         <Text style={{ color: theme.subText }}>
           Total Transactions: {stats.totalTransactions}
         </Text>
-        <Text style={{ color: "#4CAF50" }}>
+        <Text className="text-green-500">
           Total Income: ₹ {stats.income}
         </Text>
-        <Text style={{ color: "#FF5C5C" }}>
+        <Text className="text-red-500">
           Total Expense: ₹ {stats.expense}
         </Text>
-        <Text style={{ color: "#7C5CFC" }}>
+        <Text className="text-purple-600">
           Total Investment: ₹ {stats.investment}
         </Text>
       </View>
 
-      {/* 🌗 Appearance */}
-      <View style={[styles.card, { backgroundColor: theme.card }]}>
-        <View style={styles.settingRow}>
-          <View style={styles.row}>
+      {/* Dark Mode */}
+      <View className="mx-5 mt-5 p-5 rounded-2xl shadow" style={{ backgroundColor: theme.card }}>
+        <View className="flex-row justify-between items-center">
+          <View className="flex-row items-center">
             <Ionicons name="moon-outline" size={22} color="#7C5CFC" />
-            <Text style={[styles.settingText, { color: theme.text }]}>
+            <Text className="ml-3" style={{ color: theme.text }}>
               Dark Mode
             </Text>
           </View>
-          <Switch
-            value={isDark}
-            onValueChange={() => setIsDark(!isDark)}
-          />
+          <Switch value={isDark} onValueChange={() => setIsDark(!isDark)} />
         </View>
       </View>
 
-      {/* 🔔 Preferences */}
-      <View style={[styles.card, { backgroundColor: theme.card }]}>
-        <View style={styles.settingRow}>
+      {/* Preferences */}
+      <View className="mx-5 mt-5 p-5 rounded-2xl shadow" style={{ backgroundColor: theme.card }}>
+        <View className="flex-row justify-between items-center mb-3">
           <Text style={{ color: theme.text }}>Notifications</Text>
-          <Switch
-            value={notifications}
-            onValueChange={() => setNotifications(!notifications)}
-          />
+          <Switch value={notifications} onValueChange={() => setNotifications(!notifications)} />
         </View>
 
-        <View style={styles.settingRow}>
+        <View className="flex-row justify-between items-center">
           <Text style={{ color: theme.text }}>Monthly Reminder</Text>
-          <Switch
-            value={reminder}
-            onValueChange={() => setReminder(!reminder)}
-          />
+          <Switch value={reminder} onValueChange={() => setReminder(!reminder)} />
         </View>
       </View>
 
-      {/* 🔐 Security */}
-      <View style={[styles.card, { backgroundColor: theme.card }]}>
-        <TouchableOpacity style={styles.optionRow}>
+      {/* Security */}
+      <View className="mx-5 mt-5 p-5 rounded-2xl shadow" style={{ backgroundColor: theme.card }}>
+        <TouchableOpacity className="flex-row items-center py-2.5">
           <Ionicons name="key-outline" size={20} color="#7C5CFC" />
-          <Text style={{ marginLeft: 10, color: theme.text }}>
+          <Text className="ml-3" style={{ color: theme.text }}>
             Change Password
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionRow} onPress={clearData}>
+        <TouchableOpacity className="flex-row items-center py-2.5" onPress={clearData}>
           <Ionicons name="trash-outline" size={20} color="#FF5C5C" />
-          <Text style={{ marginLeft: 10, color: "#FF5C5C" }}>
+          <Text className="ml-3 text-red-500">
             Clear All Data
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* 🚪 Logout */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={{ color: "#fff", fontWeight: "bold" }}>
+      {/* Logout */}
+      <TouchableOpacity
+        className="bg-red-500 mx-5 mt-6 mb-10 p-4 rounded-2xl items-center"
+        onPress={logout}
+      >
+        <Text className="text-white font-bold">
           Logout
         </Text>
       </TouchableOpacity>
@@ -214,58 +205,3 @@ export default function Settings() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    paddingTop: 50,
-    paddingBottom: 25,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 35,
-    borderBottomRightRadius: 35,
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  card: {
-    margin: 20,
-    padding: 18,
-    borderRadius: 20,
-    elevation: 4,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  sectionTitle: {
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  settingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  settingText: {
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  optionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-  logoutBtn: {
-    backgroundColor: "#FF5C5C",
-    marginHorizontal: 20,
-    marginBottom: 40,
-    padding: 15,
-    borderRadius: 18,
-    alignItems: "center",
-  },
-});

@@ -1,8 +1,14 @@
 import { Tabs } from "expo-router";
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
+/* Custom Tailwind Tab Background */
+function TabBarBackground() {
+  return (
+    <View className="absolute bottom-5 left-5 right-5 h-[65px] rounded-full bg-white shadow-xl" />
+  );
+}
 
 export default function TabLayout() {
   return (
@@ -10,20 +16,15 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
+        tabBarActiveTintColor: "#7C5CFC",
+        tabBarInactiveTintColor: "#777",
         tabBarStyle: {
           position: "absolute",
-          bottom: 20,
-          left: 20,
-          right: 20,
-          height: 65,
-          borderRadius: 30,
-          backgroundColor: "#fff",
-          elevation: 10,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowOffset: { width: 0, height: 5 },
-          shadowRadius: 10,
+          backgroundColor: "transparent",
+          elevation: 0,
+          borderTopWidth: 0,
         },
+        tabBarBackground: () => <TabBarBackground />,
       }}
     >
       {/* Home */}
@@ -48,14 +49,14 @@ export default function TabLayout() {
         }}
       />
 
-      {/* CENTER PLUS BUTTON */}
+      {/* Center Add Button */}
       <Tabs.Screen
         name="add"
         options={{
           title: "",
           tabBarIcon: () => (
             <TouchableOpacity
-              className="w-14 h-14 rounded-full bg-purple-600 justify-center items-center mb-6 shadow-lg"
+              className="w-14 h-14 rounded-full bg-purple-600 justify-center items-center -mt-8 shadow-lg"
               onPress={() => router.push("/add")}
             >
               <Ionicons name="add" size={30} color="#fff" />
@@ -66,9 +67,9 @@ export default function TabLayout() {
 
       {/* Plan */}
       <Tabs.Screen
-        name="plan"
+        name="planner"
         options={{
-          title: "Plan",
+          title: "Planner",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="wallet" size={size} color={color} />
           ),
