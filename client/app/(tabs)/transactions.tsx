@@ -86,6 +86,8 @@ const [lastTap, setLastTap] = useState(0);
 useFocusEffect(
   React.useCallback(() => {
     fetchTransactions();
+    setSelectMode(false);
+    setSelectedId(null);
   }, [])
 );
 
@@ -117,7 +119,6 @@ useFocusEffect(
   }, [transactions, periodFilter, typeFilter]);
 
   /* ---------------- DELETE ---------------- */
-
 const deleteTransaction = async () => {
   if (!selectedId) return;
 
@@ -130,6 +131,8 @@ const deleteTransaction = async () => {
         try {
           const token = await AsyncStorage.getItem("token");
 
+          console.log("Deleting:", selectedId);
+
           const res = await fetch(
             `http://localhost:8000/transactions/${selectedId}`,
             {
@@ -140,26 +143,33 @@ const deleteTransaction = async () => {
             }
           );
 
+          const text = await res.text();
+          console.log("SERVER:", text);
+
           if (!res.ok) {
-            Alert.alert("Delete Failed");
+            Alert.alert("Delete Failed", text);
             return;
           }
 
-          // instant UI update
+          // UI instant update
           setTransactions(prev =>
             prev.filter(t => t._id !== selectedId)
           );
 
-          setSelectMode(false);
           setSelectedId(null);
+          setSelectMode(false);
 
         } catch (e) {
+          console.log(e);
           Alert.alert("Server not reachable");
         }
       },
     },
   ]);
 };
+
+
+
 
 
   /* ---------------- UI ---------------- */
@@ -325,7 +335,8 @@ const deleteTransaction = async () => {
       {/* LIST */}
       <FlatList
         data={filtered}
-        keyExtractor={(item) => item._id}
+       keyExtractor={(item, index) => item._id + index}
+
         contentContainerStyle={{ padding: 14, paddingBottom: 120 }}
         renderItem={({ item }) => {
           const isSelected = selectedId === item._id;
@@ -345,27 +356,24 @@ const deleteTransaction = async () => {
                 : "#3b82f6";
 
           return (
-            <TouchableOpacity
-              onLongPress={() => {
-                setSelectedId(item._id);
-                setSelectMode(true);
-              }}
-             onPress={() => {
-  const now = Date.now();
+           <TouchableOpacity
+  onLongPress={() => {
+    setSelectedId(item._id);
+    setSelectMode(true);
+  }}
+  onPress={() => {
+    if (selectMode) return;
 
-  if (now - lastTap < 300) {
-    // DOUBLE TAP → EDIT
-    router.push({
-      pathname: "/(tabs)/add",
-      params: { edit: JSON.stringify(item) },
-    });
-    return;
-  }
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      router.push({
+        pathname: "/(tabs)/add",
+        params: { edit: JSON.stringify(item) },
+      });
+    }
+    setLastTap(now);
+  }}
 
-  setLastTap(now);
-
-  if (selectMode) setSelectedId(item._id);
-}}
 
               className="p-3 rounded-2xl mb-2 flex-row items-center"
               style={{
@@ -375,7 +383,7 @@ const deleteTransaction = async () => {
               }}
             >
               <View className="mr-3">
-                <Ionicons name={icon} size={26} color={iconColor} />
+                <Ionicons name={icon} size={25} color={iconColor} />
               </View>
 
               <View className="flex-1">

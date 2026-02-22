@@ -186,7 +186,7 @@ const handleSave = async () => {
       body: JSON.stringify(payload),
     });
   } else {
-    res = await fetch(`${BASE_URL}/transactions`, {
+    res = await fetch(`http://localhost:8000/transactions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -404,10 +404,10 @@ const handleSave = async () => {
                   setDeleteMode(true);
                   setEditingTag(item);
                 }}
-                className="flex-1 m-1 rounded-2xl items-center justify-center"
+                className="flex-1 m-1 rounded-xl items-center justify-center"
                 style={{
                   backgroundColor: theme.background,
-                  height: 90,
+                  height: 60,
                 }}
               >
                 {/* DELETE BUTTON */}
@@ -425,7 +425,7 @@ const handleSave = async () => {
                   </TouchableOpacity>
                 )}
 
-                <Text style={{ fontSize: 28 }}>
+                <Text style={{ fontSize: 18 }}>
                   {item.emoji || "🏷️"}
                 </Text>
 

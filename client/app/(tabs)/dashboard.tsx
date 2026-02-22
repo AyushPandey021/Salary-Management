@@ -19,6 +19,7 @@ const { theme, isDark } = useTheme();
 
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
+const [lastTap, setLastTap] = useState(0);
 
 
   function generateMonths(year) {
@@ -131,7 +132,7 @@ useFocusEffect(
 
 
 
-          {/* Month selector */}
+     
           <TouchableOpacity
             onPress={() => setShowMonthDropdown(true)}
             className="flex-row items-center bg-white/20 px-4 py-2 rounded-full"
@@ -167,17 +168,16 @@ useFocusEffect(
 
       </LinearGradient>
 
+
       {/* Body */}
 
-      <FlatList
+  <FlatList
+  data={recentTransactions}
+  keyExtractor={(item) => item._id}
+  style={{ flex: 1 }}   // ⭐ IMPORTANT
+  contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 120 }}
+  showsVerticalScrollIndicator={false}
 
-        data={recentTransactions}
-
-
-        keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
-
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 14, paddingBottom: 150 }}
 
         ListHeaderComponent={
           <>
@@ -288,12 +288,9 @@ useFocusEffect(
 
 
                 <TouchableOpacity
-                  onPress={() => router.push("/transactions")
-
-}
-                  className="flex-row items-center"
+                  onPress={() => router.push("/transactions")}className="flex-row items-center"
                 >
-                  <Text className="text-indigo-600 font-semibold mr-1"  style={{ color: theme.text }}>
+                  <Text className="text-indigo-600 font-semibold   mr-1"style={{ color: theme.text ,color:"#6366f1" }}>
                     View All
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color="#6366f1" />
@@ -352,11 +349,21 @@ useFocusEffect(
             : "";
 
           return (
-            <View className="bg-white rounded-2xl px-2 py-2 mb-1 border border-gray-100 shadow-sm"   style={{
-    backgroundColor: theme.card,
-    borderWidth: 1,
-    borderColor: theme.border,
-  }}>
+        <TouchableOpacity
+  onPress={() => {
+    const now = Date.now();
+    if (lastTap && now - lastTap < 300) {
+      router.push({
+        pathname: "/(tabs)/add",
+        params: { edit: JSON.stringify(item) },
+      });
+    }
+    setLastTap(now);
+  }}
+  className="rounded-2xl px-2 py-2 mb-2"
+  style={{ backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }}
+>
+
 
               <View className="flex-row items-center justify-between">
 
@@ -408,7 +415,7 @@ useFocusEffect(
                 </Text>
 
               </View>
-            </View>
+           </TouchableOpacity>
           );
         }}
 
