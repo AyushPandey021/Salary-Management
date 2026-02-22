@@ -18,7 +18,7 @@ amount: number;
 month: string;
 };
 
-const BASE_URL = "http://192.168.10.35:8081"; // ← CHANGE TO YOUR PC IP
+const BASE_URL = "http://localhost:8000"; // ← CHANGE TO YOUR PC IP
 
 export default function Planner() {
 

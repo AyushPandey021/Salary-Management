@@ -9,14 +9,15 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import logo from "../../../../assets/images/trackpay.png";
+import logo from "../../assets/t.jpg";
 
-
-const BASE_URL = "http://192.168.10.35:8081";
+const { width } = Dimensions.get("window");
+const BASE_URL = "http://localhost:8000"; // change IP if needed
 
 export default function AuthScreen() {
 
@@ -25,19 +26,16 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
 
+  /* dynamic slider width */
+  const TAB_WIDTH = width * 0.7 / 2;
+
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const slideInterpolate = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 140],
-  });
-
-  const switchTab = (login) => {
+  const switchTab = (login:boolean) => {
     setIsLogin(login);
-    Animated.timing(slideAnim, {
-      toValue: login ? 0 : 1,
-      duration: 350,
-      useNativeDriver: false,
+    Animated.spring(slideAnim, {
+      toValue: login ? 0 : TAB_WIDTH,
+      useNativeDriver: true,
     }).start();
   };
 
@@ -62,7 +60,7 @@ export default function AuthScreen() {
           await AsyncStorage.setItem("token", data.access_token);
           router.replace("/dashboard");
         } else {
-          Alert.alert("Signup Successful 🎉", "Now login to continue");
+          Alert.alert("Signup Successful 🎉", "Please Login");
           switchTab(true);
         }
       } else {
@@ -77,63 +75,74 @@ export default function AuthScreen() {
   return (
     <LinearGradient
       colors={["#5F6BFF", "#8E67FF"]}
-      className="flex-1 justify-center items-center px-6"
+      className="flex-1"
     >
-
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="w-full items-center"
+        className="flex-1 justify-center px-6"
       >
-        {/* Logo  
-        <Image
-          source={logo}
-        
-          className="w-20 h-20 mb-6"
-          resizeMode="contain"
-        />
-       */}
 
-
-        {/* Card */}
-        <View className="w-full bg-white/10 backdrop-blur-md p-6 rounded-3xl">
-
-          <Text className="text-white text-2xl font-bold text-center mb-5">
-            {isLogin ? "Welcome Back " : "Create Account "}
-          </Text>
-
-          {/* Switch */}
-          <View className="flex-row bg-white/20 rounded-full mb-6 relative overflow-hidden">
-
-            <Animated.View
-              style={{ transform: [{ translateX: slideInterpolate }] }}
-              className="absolute w-1/2 h-full bg-white rounded-full"
+        {/* LOGO */}
+        <View className="items-center mb-2">
+          <View className="w-26 h-16 bg-white/20 rounded-2xl items-center justify-center">
+            <Image
+              source={logo}
+              style={{ width: 62, height: 42 }}
+              resizeMode="contain"
             />
-
-            <TouchableOpacity
-              className="flex-1 py-3 items-center"
-              onPress={() => switchTab(true)}
-            >
-              <Text className={`font-semibold ${isLogin ? "text-indigo-600" : "text-white"}`}>
-                Login
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="flex-1 py-3 items-center"
-              onPress={() => switchTab(false)}
-            >
-              <Text className={`font-semibold ${!isLogin ? "text-indigo-600" : "text-white"}`}>
-                Signup
-              </Text>
-            </TouchableOpacity>
-
           </View>
 
-          {/* Inputs */}
+          <Text className="text-white text-2xl font-bold mt-3">
+            TrackPa<span className="text-purple-500">Y</span>
+          </Text>
+
+          <Text className="text-white/80 text-sm mt-1">
+            Manage your money smartly
+          </Text>
+        </View>
+
+        {/* CARD */}
+        <View className="bg-white/15 rounded-3xl p-6">
+
+          {/* SWITCH */}
+          <View
+            style={{ width: width * 0.7 }}
+            className="self-center bg-white/20 rounded-full mb-6 overflow-hidden"
+          >
+            <Animated.View
+              style={{
+                width: TAB_WIDTH,
+                transform: [{ translateX: slideAnim }],
+              }}
+              className="absolute h-full bg-white rounded-full"
+            />
+
+            <View className="flex-row">
+              <TouchableOpacity
+                className="flex-1 py-3 items-center"
+                onPress={() => switchTab(true)}
+              >
+                <Text className={`font-semibold ${isLogin ? "text-indigo-600" : "text-white"}`}>
+                  Login
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 py-3 items-center"
+                onPress={() => switchTab(false)}
+              >
+                <Text className={`font-semibold ${!isLogin ? "text-indigo-600" : "text-white"}`}>
+                  Signup
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* INPUTS */}
           {!isLogin && (
             <TextInput
               placeholder="Full Name"
-              placeholderTextColor="#ddd"
+              placeholderTextColor="#e5e7eb"
               className="bg-white/20 text-white p-4 rounded-xl mb-4"
               value={name}
               onChangeText={setName}
@@ -142,7 +151,7 @@ export default function AuthScreen() {
 
           <TextInput
             placeholder="Email"
-            placeholderTextColor="#ddd"
+            placeholderTextColor="#e5e7eb"
             className="bg-white/20 text-white p-4 rounded-xl mb-4"
             value={email}
             onChangeText={setEmail}
@@ -151,24 +160,25 @@ export default function AuthScreen() {
 
           <TextInput
             placeholder="Password"
-            placeholderTextColor="#ddd"
+            placeholderTextColor="#e5e7eb"
             secureTextEntry
-            className="bg-white/20 text-white p-4 rounded-xl mb-2"
+            className="bg-white/20 text-white p-4 rounded-xl"
             value={password}
             onChangeText={setPassword}
           />
 
-          {/* Button */}
+          {/* BUTTON */}
           <TouchableOpacity
             onPress={handleAuth}
-            className="bg-white py-4 rounded-xl items-center mt-4"
+            className="bg-white py-4 rounded-xl items-center mt-5"
           >
             <Text className="text-indigo-600 font-bold text-lg">
-              {isLogin ? "Login" : "Signup"}
+              {isLogin ? "Login" : "Create Account"}
             </Text>
           </TouchableOpacity>
 
         </View>
+
       </KeyboardAvoidingView>
     </LinearGradient>
   );

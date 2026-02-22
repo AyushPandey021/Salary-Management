@@ -8,229 +8,584 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+import { router, useFocusEffect ,useLocalSearchParams } from "expo-router";
+// import { BASE_URL } from "../../src/config/api";
+import { useTheme } from "../../src/context/ThemeContext";
+import { FlatList } from  "react-native";
+
+type TabType = "Income" | "Expense" | "Investment";
 
 export default function AddTransaction() {
-  type TabType = "Income" | "Expense" | "Investment";
+  const { theme, isDark } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<TabType>("Income");
+  const [activeTab, setActiveTab] = useState<TabType>("Expense");
   const [amount, setAmount] = useState("");
+  const [amountError, setAmountError] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [transactionType, setTransactionType] = useState("Cash");
-  const [selectedTag, setSelectedTag] = useState("");
-  const [showTagModal, setShowTagModal] = useState(false);
-  const [customTags, setCustomTags] = useState<string[]>([]);
 
-  const tagOptions: Record<TabType, string[]> = {
-    Income: ["Salary", "Freelance", "Bonus", "Side Income"],
-    Expense: ["Eating Out", "Shopping", "Movie", "Gym"],
-    Investment: ["SIP", "Insurance", "Stocks", "Crypto"],
+  const [selectedTag, setSelectedTag] = useState<any>(null);
+  const [tags, setTags] = useState<any[]>([]);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [paymentType, setPaymentType] = useState("Cash");
+
+  const [saving, setSaving] = useState(false);
+  const [showAddTag, setShowAddTag] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagEmoji, setNewTagEmoji] = useState("🏷️");
+
+  const [editingTag, setEditingTag] = useState<any>(null);
+  const [showEditTag, setShowEditTag] = useState(false);
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [lastTap, setLastTap] = useState<number>(0);
+
+const params = useLocalSearchParams();
+const editData = params?.edit ? JSON.parse(params.edit as string) : null;
+const isEdit = !!editData;
+
+  /* ---------------- LOAD TAGS ---------------- */
+
+  const loadTags = async () => {
+    const token = await AsyncStorage.getItem("token");
+
+    const res = await fetch(`http://localhost:8000/tags/${activeTab}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    console.log("TAGS RESPONSE:", data);
+    setTags(data);
   };
 
-  const handleSave = async () => {
-    if (!title || !amount) {
-      alert("Please fill required fields");
+  useFocusEffect(
+    React.useCallback(() => {
+      loadTags();
+    }, [activeTab])
+  );
+useFocusEffect(
+  React.useCallback(() => {
+
+    if (!params?.edit) {
+      // NEW TRANSACTION → CLEAR FORM
+      setTitle("");
+      setAmount("");
+      setDescription("");
+      setSelectedTag(null);
+      setPaymentType("Cash");
+      setActiveTab("Expense");
       return;
     }
 
+    const data = JSON.parse(params.edit as string);
+
+    setTitle(data.title);
+    setAmount(String(data.amount));
+    setDescription(data.description || "");
+    setSelectedTag(data.tag ? { name: data.tag, emoji: "🏷️" } : null);
+    setActiveTab(data.type);
+
+  }, [params?.edit])
+);
+
+
+
+  /* ---------------- VALIDATION ---------------- */
+  // update tag 
+const updateTag = async () => {
+  if (!editingTag?._id) return;
+
+  try {
     const token = await AsyncStorage.getItem("token");
 
-    const now = new Date();
-    const month = now.toLocaleString("default", {
-      month: "long",
-      year: "numeric",
-    });
-
-    const response = await fetch("http://192.168.10.35:8081/transactions", {
-      method: "POST",
+    const res = await fetch(`http://localhost:8000/tags/${editingTag._id}`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        type: activeTab,
-        title,
-        amount: Number(amount),
-        tag: selectedTag,
-        payment_method: transactionType,
-        description,
-        month,
+        name: editingTag.name?.trim(),
+        emoji: editingTag.emoji || "🏷️",
       }),
     });
 
-    if (response.ok) {
-      alert("Transaction Added Successfully 🎉");
-      setTitle("");
-      setAmount("");
-      setDescription("");
-      setSelectedTag("");
+    const data = await res.json();
+
+    if (!res.ok) {
+      Toast.show({ type: "error", text1: data.detail || "Update failed" });
+      return;
+    }
+
+    Toast.show({ type: "success", text1: "Tag updated ✏️" });
+
+    setShowEditTag(false);
+    setEditingTag(null);
+
+    // IMPORTANT
+    await loadTags();
+
+  } catch (err) {
+    Toast.show({ type: "error", text1: "Network error" });
+  }
+};
+
+
+  // delete tag 
+  const deleteTag = async (id: string) => {
+    const token = await AsyncStorage.getItem("token");
+
+    await fetch(`http://localhost:8000/tags/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    loadTags();
+    setDeleteMode(false);
+  };
+
+
+  const validateAmount = (value: string) => {
+    if (!/^\d*\.?\d*$/.test(value)) {
+      setAmountError("Amount must be a number");
     } else {
-      alert("Something went wrong ❌");
+      setAmountError("");
+      setAmount(value);
     }
   };
 
+  /* ---------------- SAVE ---------------- */
+const handleSave = async () => {
+  const token = await AsyncStorage.getItem("token");
+
+  const payload = {
+    type: activeTab,
+    title,
+    amount: Number(amount),
+    tag: selectedTag?.name || "",
+    description,
+    month: new Date().toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    }),
+  };
+
+  let res;
+
+  if (isEdit) {
+    res = await fetch(`http://localhost:8000/transactions/${editData._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } else {
+    res = await fetch(`${BASE_URL}/transactions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  if (!res.ok) {
+    Toast.show({ type: "error", text1: "Failed" });
+    return;
+  }
+
+  Toast.show({
+    type: "success",
+    text1: isEdit ? "Transaction Updated ✏️" : "Transaction Added 🎉",
+  });
+
+  router.replace("/(tabs)/transactions");
+  // router.back();
+
+};
+
+
+  /* ---------------- UI ---------------- */
+
   return (
-    <View className="flex-1 bg-[#f4f6fb]">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
 
       {/* Header */}
       <LinearGradient
-        colors={["#7C5CFC", "#5F2EEA"]}
+        colors={isDark ? ["#3a485d", "#2c374d"] : ["#7C5CFC", "#5F2EEA"]}
         className="h-32 px-5 justify-center rounded-b-3xl"
       >
-        <Text className="text-white text-xl font-bold">
+        <Text className="text-white text-xl font-semibold">
           Add Transaction
         </Text>
       </LinearGradient>
 
-      <ScrollView className="-mt-5 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView className="-mt-5 px-5">
 
         {/* Tabs */}
         <View className="flex-row justify-between mb-5">
-          {["Income", "Expense", "Investment"].map((tab) => (
+          {(["Income", "Expense", "Investment"] as TabType[]).map(tab => (
             <TouchableOpacity
               key={tab}
-              className={`w-[31%] py-2.5 rounded-full items-center shadow ${activeTab === tab ? "bg-[#7C5CFC]" : "bg-white"
-                }`}
-              onPress={() => {
-                setActiveTab(tab as TabType);
-                setSelectedTag("");
+              onPress={() => setActiveTab(tab)}
+              className="flex-1 mx-1 py-2 rounded-full items-center"
+              style={{
+                backgroundColor:
+                  activeTab === tab ? theme.primary : theme.card,
               }}
             >
-              <Text
-                className={`font-semibold ${activeTab === tab ? "text-white" : "text-gray-600"
-                  }`}
-              >
-                {tab}
+              <Text style={{
+                color: activeTab === tab ? "#fff" : theme.text
+              }}>
+                {tab === "Income" ? "💰 Income" :
+                  tab === "Expense" ? "🛒 Expense" : "📈 Invest"}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Form Card */}
-        <View className="bg-white p-5 rounded-2xl shadow">
+        {/* FORM */}
+        <View className="p-4 rounded-2xl" style={{ backgroundColor: theme.card }}>
 
-          {/* Title */}
+          {/* TITLE */}
           <TextInput
-            className="bg-gray-100 p-3.5 rounded-xl mb-3.5"
             placeholder="Title"
+            placeholderTextColor={theme.subText}
             value={title}
             onChangeText={setTitle}
+            className="p-3 rounded-xl mb-3"
+            style={{ backgroundColor: theme.background, color: theme.text }}
           />
 
-          {/* Amount */}
+          {/* AMOUNT */}
           <TextInput
-            className="bg-gray-100 p-3.5 rounded-xl mb-3.5"
             placeholder="Amount"
+            placeholderTextColor={theme.subText}
             keyboardType="numeric"
             value={amount}
-            onChangeText={setAmount}
+            onChangeText={validateAmount}
+            className="p-3 rounded-xl"
+            style={{ backgroundColor: theme.background, color: theme.text }}
           />
 
-          {/* Tag */}
-          <Text className="font-semibold mb-2 text-gray-700">Tag</Text>
-
-          <TouchableOpacity
-            className="flex-row justify-between items-center bg-gray-100 p-3.5 rounded-xl mb-4"
-            onPress={() => setShowTagModal(true)}
-          >
-            <Text className={selectedTag ? "text-black" : "text-gray-400"}>
-              {selectedTag || "Select Tag"}
+          {amountError ? (
+            <Text className="text-red-500 text-xs mt-1">
+              {amountError}
             </Text>
-            <Ionicons name="chevron-down" size={18} color="#555" />
+          ) : null}
+
+          {/* TAG SELECT */}
+          <TouchableOpacity
+            onPress={() => setShowTagModal(true)}
+            className="p-3 rounded-xl mt-3"
+            style={{ backgroundColor: theme.background }}
+          >
+            <Text style={{ color: theme.text }}>
+              {selectedTag ? `${selectedTag.emoji} ${selectedTag.name}` : "Select Tag"}
+
+            </Text>
           </TouchableOpacity>
-
-          {/* Payment */}
-          <Text className="font-semibold mb-2 text-gray-700">Payment</Text>
-
-          <View className="flex-row flex-wrap mb-4">
-            {["Cash", "UPI", "Bank", "Card"].map((type) => (
+        <Text
+    className="text-[13px] font-semibold  mt-1"
+    style={{ color: theme.subText, fontWeight: "600" }}
+  >
+    Payment Method
+  </Text>
+          <View className="flex-row flex-wrap mt-3">
+            
+            {["Cash", "UPI", "Bank", "Card"].map(p => (
               <TouchableOpacity
-                key={type}
-                className={`py-1.5 px-3.5 rounded-full mr-2 mb-2 ${transactionType === type
-                    ? "bg-[#7C5CFC]"
-                    : "bg-gray-200"
-                  }`}
-                onPress={() => setTransactionType(type)}
+                key={p}
+                onPress={() => setPaymentType(p)}
+                className="px-3 py-1.5 rounded-full mr-2 mb-2"
+                style={{
+                  backgroundColor: paymentType === p ? theme.primary : theme.background
+                }}
               >
-                <Text
-                  className={`text-xs ${transactionType === type
-                      ? "text-white"
-                      : "text-gray-700"
-                    }`}
-                >
-                  {type}
+                <Text style={{ color: paymentType === p ? "white" : theme.text }}>
+                  {p}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* Description */}
+          {/* DESCRIPTION */}
           <TextInput
-            className="bg-gray-100 p-3.5 rounded-xl mb-3.5 h-16"
-            placeholder="Description (optional)"
+            placeholder="Description"
+            placeholderTextColor={theme.subText}
             value={description}
             onChangeText={setDescription}
             multiline
+            className="p-3 rounded-xl mt-3 h-20"
+            style={{ backgroundColor: theme.background, color: theme.text }}
           />
 
-          {/* Save Button */}
+          {/* SAVE BUTTON */}
           <TouchableOpacity
-            className="bg-[#7C5CFC] p-3.5 rounded-2xl items-center mt-2"
             onPress={handleSave}
+            disabled={saving}
+            className="p-3 rounded-xl mt-4 items-center"
+            style={{ backgroundColor: theme.primary }}
           >
-            <Text className="text-white font-bold">
-              Save {activeTab}
+            <Text className="text-white font-semibold">
+              {saving ? "Saving..." : "Save Transaction"}
             </Text>
           </TouchableOpacity>
+
         </View>
       </ScrollView>
 
-      {/* Modal */}
-      <Modal visible={showTagModal} transparent animationType="slide">
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-white p-5 rounded-t-3xl max-h-[70%]">
+      {/* TAG MODAL */}
+<Modal visible={showTagModal} transparent animationType="slide">
+  <View className="flex-1 bg-black/40 justify-end">
 
-            <Text className="text-lg font-bold mb-4">
-              Select Tag
-            </Text>
+    <View
+      className="rounded-t-3xl pt-5 pb-3"
+      style={{
+        backgroundColor: theme.card,
+        height: "70%",
+      }}
+    >
 
-            <ScrollView>
-              {[...tagOptions[activeTab], ...customTags].map((tag) => (
-                <TouchableOpacity
-                  key={tag}
-                  className="py-3 border-b border-gray-200"
-                  onPress={() => {
-                    setSelectedTag(tag);
-                    setShowTagModal(false);
+      {/* HEADER */}
+      <View className="flex-row justify-between items-center px-5 mb-3">
+        <Text className="text-lg font-semibold" style={{ color: theme.text }}>
+          Select Tag
+        </Text>
+
+        <TouchableOpacity onPress={() => setShowAddTag(true)}>
+          <Ionicons name="add-circle" size={26} color={theme.primary} />
+        </TouchableOpacity>
+      </View>
+
+
+      {/* TAG GRID */}
+      {Array.isArray(tags) && tags.length > 0 ? (
+        <FlatList
+          data={tags}
+          numColumns={3}
+          keyExtractor={(item) => item._id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 10,
+            paddingBottom: 25,
+          }}
+          renderItem={({ item }) => {
+
+         const handlePress = (item) => {
+  const now = Date.now();
+  const DOUBLE_PRESS_DELAY = 280;
+
+  if (lastTap && now - lastTap < DOUBLE_PRESS_DELAY) {
+    // DOUBLE TAP → EDIT
+    setEditingTag({ ...item }); // IMPORTANT (clone object)
+    setShowEditTag(true);
+  } else {
+    // SINGLE TAP → SELECT
+    setSelectedTag(item);
+    setShowTagModal(false);
+  }
+
+  setLastTap(now);
+};
+
+
+            return (
+              <TouchableOpacity
+                onPress={ ()=> handlePress(item)}
+                onLongPress={() => {
+                  setDeleteMode(true);
+                  setEditingTag(item);
+                }}
+                className="flex-1 m-1 rounded-2xl items-center justify-center"
+                style={{
+                  backgroundColor: theme.background,
+                  height: 90,
+                }}
+              >
+                {/* DELETE BUTTON */}
+                {deleteMode && editingTag?._id === item._id && (
+                  <TouchableOpacity
+                    onPress={() => deleteTag(item._id)}
+                    style={{
+                      position: "absolute",
+                      top: 5,
+                      right: 5,
+                      zIndex: 10,
+                    }}
+                  >
+                    <Ionicons name="close-circle" size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                )}
+
+                <Text style={{ fontSize: 28 }}>
+                  {item.emoji || "🏷️"}
+                </Text>
+
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: theme.text,
+                    fontSize: 12,
+                    marginTop: 6,
                   }}
                 >
-                  <Text>{tag}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      ) : (
+        <View className="flex-1 justify-center items-center">
+          <Text style={{ color: theme.subText }}>
+            No tags yet...
+          </Text>
+        </View>
+      )}
+
+
+      {/* CLOSE */}
+      <TouchableOpacity
+        onPress={() => {
+          setDeleteMode(false);
+          setShowTagModal(false);
+        }}
+        className="items-center py-3 border-t"
+        style={{ borderColor: theme.border }}
+      >
+        <Text style={{ color: theme.primary }}>Close</Text>
+      </TouchableOpacity>
+
+    </View>
+  </View>
+</Modal>
+
+{/* // new add  */}
+<Modal visible={showEditTag} transparent animationType="fade">
+  <View className="flex-1 justify-center items-center bg-black/40">
+
+    <View className="w-[85%] p-5 rounded-2xl" style={{ backgroundColor: theme.card }}>
+
+      <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>
+        Edit Tag
+      </Text>
+
+      <TextInput
+     value={editingTag?.emoji ?? ""}
+
+        onChangeText={(v) => setEditingTag({ ...editingTag, emoji: v })}
+        className="p-3 rounded-xl mb-3"
+        style={{ backgroundColor: theme.background, color: theme.text }}
+      />
+
+      <TextInput
+        value={editingTag?.name ?? ""}
+        onChangeText={(v) => setEditingTag({ ...editingTag, name: v })}
+        className="p-3 rounded-xl"
+        style={{ backgroundColor: theme.background, color: theme.text }}
+      />
+
+      <TouchableOpacity
+        className="mt-4 p-3 rounded-xl items-center"
+        style={{ backgroundColor: theme.primary }}
+        onPress={updateTag}
+      >
+        <Text className="text-white">Update Tag</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        className="items-center mt-3"
+        onPress={() => setShowEditTag(false)}
+      >
+        <Text style={{ color: theme.subText }}>Cancel</Text>
+      </TouchableOpacity>
+
+    </View>
+  </View>
+</Modal>
+
+
+      <Modal visible={showAddTag} transparent animationType="fade">
+        <View className="flex-1 justify-center items-center bg-black/40">
+
+          <View className="w-[85%] p-5 rounded-2xl" style={{ backgroundColor: theme.card }}>
+
+            <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>
+              New Tag
+            </Text>
+
+            <TextInput
+              placeholder="Emoji (example 🍕)"
+              value={newTagEmoji}
+              onChangeText={setNewTagEmoji}
+              className="p-3 rounded-xl mb-3"
+              style={{ backgroundColor: theme.background, color: theme.text }}
+            />
+
+            <TextInput
+              placeholder="Tag name"
+              value={newTagName}
+              onChangeText={setNewTagName}
+              className="p-3 rounded-xl"
+              style={{ backgroundColor: theme.background, color: theme.text }}
+            />
 
             <TouchableOpacity
-              className="bg-[#7C5CFC] p-3 rounded-xl items-center mt-4"
-              onPress={() => {
-                const newTag = "New Tag " + (customTags.length + 1);
-                setCustomTags([...customTags, newTag]);
+              className="mt-4 p-3 rounded-xl items-center"
+              style={{ backgroundColor: theme.primary }}
+              onPress={async () => {
+
+                if (!newTagName.trim()) {
+                  Toast.show({ type: "error", text1: "Enter tag name" });
+                  return;
+                }
+
+                const token = await AsyncStorage.getItem("token");
+
+                const res = await fetch(`http://localhost:8000/tags`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    name: newTagName,
+                    emoji: newTagEmoji,
+                    category: activeTab
+                  })
+                });
+
+                if (!res.ok) {
+                  Toast.show({ type: "error", text1: "Failed to add tag" });
+                  return;
+                }
+
+                Toast.show({ type: "success", text1: "Tag Added 🎉" });
+
+                setShowAddTag(false);
+                setNewTagName("");
+                setNewTagEmoji("🏷️");
+
+                // IMPORTANT
+                setTimeout(loadTags, 500);
               }}
-            >
-              <Text className="text-white">+ Add Tag</Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity
-              className="items-center mt-3"
-              onPress={() => setShowTagModal(false)}
             >
-              <Text>Close</Text>
+              <Text className="text-white">Save Tag</Text>
             </TouchableOpacity>
 
           </View>
         </View>
       </Modal>
+
     </View>
   );
 }

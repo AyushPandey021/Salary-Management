@@ -53,7 +53,7 @@ export default function Reports() {
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://192.168.10.35:8081/transactions?month=${selectedMonth}`,
+        `http://localhost:8000/transactions?month=${selectedMonth}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

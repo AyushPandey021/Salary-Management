@@ -35,14 +35,14 @@ export default function Settings() {
     try {
       const token = await AsyncStorage.getItem("token");
 
-      const userRes = await fetch("http://192.168.10.35:8081/auth/me", {
+      const userRes = await fetch("http://localhost:8000/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const userData = await userRes.json();
       setUser(userData);
 
-      const transRes = await fetch("http://192.168.10.35:8081/transactions/all", {
+      const transRes = await fetch("http://localhost:8000/transactions/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

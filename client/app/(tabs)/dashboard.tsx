@@ -5,19 +5,21 @@ import {
   Modal,
   FlatList,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { useTheme } from "../../src/context/ThemeContext";
 export default function Dashboard() {
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState(null);
+const { theme, isDark } = useTheme();
 
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
+
 
   function generateMonths(year) {
     return Array.from({ length: 12 }, (_, i) =>
@@ -27,25 +29,19 @@ export default function Dashboard() {
       })
     );
   }
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [summary, setSummary] = useState({
+    income: 0,
+    expense: 0,
+    investment: 0,
+    balance: 0,
+  });
 
-  const [months, setMonths] = useState(generateMonths(currentYear));
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
-  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
-
-  const [transactions, setTransactions] = useState([]);
-  const [income, setIncome] = useState(0);
-  const [expense, setExpense] = useState(0);
-  const [investment, setInvestment] = useState(0);
-  const [periodFilter, setPeriodFilter] = useState("month"); // day | week | month
-  const [typeFilter, setTypeFilter] = useState("all"); // all | Income | Expense | Investment
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [showFilter, setShowFilter] = useState(false);
   const fetchUser = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
 
-      const response = await fetch("http://192.168.10.35:8081/auth/me", {
+      const response = await fetch("http://localhost:8000/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -58,80 +54,74 @@ export default function Dashboard() {
       console.log("User fetch error", error);
     }
   };
-  useEffect(() => {
-    let data = [...transactions];
-    const now = new Date();
 
-    // TIME FILTER
-    if (periodFilter === "day") {
-      data = data.filter(t => {
-        if (!t.created_at) return false;
-        const d = new Date(t.created_at);
-        return d.toDateString() === now.toDateString();
-      });
-    }
-
-    if (periodFilter === "week") {
-      const weekAgo = new Date();
-      weekAgo.setDate(now.getDate() - 7);
-
-      data = data.filter(t => {
-        if (!t.created_at) return false;
-        return new Date(t.created_at) >= weekAgo;
-      });
-    }
-
-    // TYPE FILTER
-    if (typeFilter !== "all") {
-      data = data.filter(t => t.type === typeFilter);
-    }
+  const [months, setMonths] = useState(generateMonths(currentYear));
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
 
 
-    setFilteredTransactions(data);
+  const [income, setIncome] = useState(0);
+  const [expense, setExpense] = useState(0);
+  const [investment, setInvestment] = useState(0);
 
-  }, [transactions, periodFilter, typeFilter]);
+  const [transactions, setTransactions] = useState([]);
+
+
+
+
 
   const balance = income - expense - investment;
+  const BASE_URL = "http://localhost:8000"; // CHANGE IP
 
-  useEffect(() => {
-    setMonths(generateMonths(selectedYear));
-  }, [selectedYear]);
+  const fetchDashboard = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
 
+      // 🔹 summary (cards + balance)
+      const summaryRes = await fetch(`${BASE_URL}/transactions/summary`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
+      const summaryData = await summaryRes.json();
+      setSummary(summaryData);
 
-  const fetchTransactions = async () => {
-    const token = await AsyncStorage.getItem("token");
+      // 🔹 recent 4 transactions
+      const recentRes = await fetch(`${BASE_URL}/transactions/recent`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    const response = await fetch(
-      `http://192.168.10.35:8081/transactions?month=${selectedMonth}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const recentData = await recentRes.json();
+      setRecentTransactions(recentData);
 
-    const data = await response.json();
-    setTransactions(data);
-
-    let inc = 0, exp = 0, inv = 0;
-    data.forEach((item) => {
-      if (item.type === "Income") inc += item.amount;
-      if (item.type === "Expense") exp += item.amount;
-      if (item.type === "Investment") inv += item.amount;
-    });
-
-    setIncome(inc);
-    setExpense(exp);
-    setInvestment(inv);
+    } catch (e) {
+      console.log("Dashboard error:", e);
+    }
   };
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [selectedMonth]);
+
+
+
+
+
+useFocusEffect(
+  React.useCallback(() => {
+    fetchDashboard();
+    fetchUser();
+  }, [])
+);
+
 
   return (
-    <View className="flex-1 bg-[#F3F4F8]">
+    <View className="flex-1"style={{ backgroundColor: theme.background }}>
 
       {/* Header */}
       <LinearGradient
-        colors={["#8E67FF", "#5F6BFF"]}
+        colors={
+    isDark
+      ? ["#1a253f", "#232947"]   // dark gradient
+      : ["#8E67FF", "#5F6BFF"]   // light gradient
+  }
         className="pt-4 pb-8 px-2 rounded-b-[35px]"
       >
 
@@ -154,9 +144,9 @@ export default function Dashboard() {
           {/* Profile */}
           <TouchableOpacity
             onPress={() => router.push("/settings")}
-            className="w-11 h-11 bg-white rounded-full items-center justify-center"
+            className="w-11 h-11 bg-white rounded-full items-center justify-center" style={{ backgroundColor: theme.card }}
           >
-            <Text className="font-bold text-indigo-500 text-lg">
+            <Text className="font-bold text-indigo-500 text-lg" style={{ color: theme.primary }} >
               {user?.name ? user.name.charAt(0).toUpperCase() : "?"}
             </Text>
           </TouchableOpacity>
@@ -171,15 +161,18 @@ export default function Dashboard() {
             Current Balance
           </Text>
           <Text className="text-white text-4xl font-bold mt-1">
-            ₹ {balance}
+            ₹ {summary.balance}
           </Text>
         </View>
 
       </LinearGradient>
 
       {/* Body */}
+
       <FlatList
-        data={filteredTransactions}
+
+        data={recentTransactions}
+
 
         keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
 
@@ -188,7 +181,7 @@ export default function Dashboard() {
 
         ListHeaderComponent={
           <>
-            <Text className="text-sm font-semibold mb-1">
+            <Text className="text-sm font-semibold mb-1"  style={{ color: theme.text }}>
               Overview
             </Text>
 
@@ -199,7 +192,14 @@ export default function Dashboard() {
             <View className="flex-row gap-3 px-1 mt-1">
 
               {/* Income */}
-              <View className="flex-1 bg-white rounded-2xl py-1 px-3 shadow-sm">
+              <View className="flex-1 bg-white rounded-2xl py-1 px-3 shadow-sm"  style={{
+    backgroundColor: theme.card,
+    shadowColor: "#000",
+    shadowOpacity: isDark ? 0.3 : 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  }}>
                 <View className="items-center">
 
                   <View className="bg-green-100 p-2 rounded-full mb-1">
@@ -213,14 +213,21 @@ export default function Dashboard() {
                     adjustsFontSizeToFit
                     minimumFontScale={0.6}
                     className="text-green-600  text-[15px] font-semibold mt-1">
-                    ₹ {income}
+                    ₹ {summary.income}
                   </Text>
 
                 </View>
               </View>
 
               {/* Expense */}
-              <View className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm">
+              <View className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm" style={{
+    backgroundColor: theme.card,
+    shadowColor: "#000",
+    shadowOpacity: isDark ? 0.3 : 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  }}>
                 <View className="items-center">
 
                   <View className="bg-red-100 p-2 rounded-full mb-1">
@@ -232,7 +239,7 @@ export default function Dashboard() {
                   <Text numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.6} className="text-red-500 text-[15px] font-semibold mt-1">
-                    ₹ {expense}
+                    ₹ {summary.expense}
                   </Text>
 
                 </View>
@@ -241,7 +248,14 @@ export default function Dashboard() {
               {/* Investment */}
               <View numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.6} className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm">
+                minimumFontScale={0.6} className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm" style={{
+    backgroundColor: theme.card,
+    shadowColor: "#000",
+    shadowOpacity: isDark ? 0.3 : 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  }}>
                 <View className="items-center">
 
                   <View className="bg-blue-100 p-2 rounded-full mb-1">
@@ -251,7 +265,7 @@ export default function Dashboard() {
                   <Text className="text-[11px] text-gray-500">Invest</Text>
 
                   <Text className="text-blue-600 text-[15px] font-semibold mt-1">
-                    ₹ {investment}
+                    ₹ {summary.investment}
                   </Text>
 
                 </View>
@@ -265,137 +279,34 @@ export default function Dashboard() {
 
             <View className="flex-row justify-between items-center mt-2 mb-2 px-1">
 
-              <Text className="text-sm font-semibold">
+              <Text className="text-sm font-semibold"  style={{ color: theme.text }}>
                 Recent Transactions
               </Text>
 
-              {/* FILTER BUTTON */}
-              <TouchableOpacity
-                onPress={() => setShowFilter(true)}
-                className="bg-white p-2 rounded-full shadow-sm border border-gray-200"
-              >
-                <Ionicons name="options-outline" size={16} color="#555" />
-              </TouchableOpacity>
+              <View className="flex-row justify-between items-center mt-3 mb-2 px-1">
+
+
+
+                <TouchableOpacity
+                  onPress={() => router.push("/transactions")
+
+}
+                  className="flex-row items-center"
+                >
+                  <Text className="text-indigo-600 font-semibold mr-1"  style={{ color: theme.text }}>
+                    View All
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color="#6366f1" />
+                </TouchableOpacity>
+
+              </View>
+
+
 
             </View>
 
-            {/* FILTER DROPDOWN */}
-            <Modal visible={showFilter} transparent animationType="fade">
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={() => setShowFilter(false)}
-                className="flex-1 bg-black/20 justify-start items-end pt-40 pr-2"
-              >
-                <Modal visible={showFilter} transparent animationType="slide">
-                  <View className="flex-1 justify-end bg-black/30">
 
-                    {/* Bottom Sheet */}
-                    <View className="bg-white rounded-t-3xl px-5 pt-3 pb-5">
 
-                      {/* drag handle */}
-                      <View className="w-12 h-1.5 bg-gray-300 rounded-full self-center mb-3" />
-
-                      {/* TITLE */}
-                      <Text className="text-base font-semibold text-center mb-4">
-                        Filters
-                      </Text>
-
-                      {/* ---------- TIME FILTER ---------- */}
-                      <Text className="text-[11px] text-gray-400 mb-2 font-semibold">
-                        Time Period
-                      </Text>
-
-                      <View className="flex-row justify-between mb-5">
-
-                        {["day", "week", "month"].map(p => (
-                          <TouchableOpacity
-                            key={p}
-                            onPress={() => setPeriodFilter(p)}
-                            className={`flex-1 mx-1 py-2 rounded-xl items-center ${periodFilter === p
-                                ? "bg-indigo-500"
-                                : "bg-gray-100"
-                              }`}
-                          >
-                            <Text className={`text-xs font-semibold ${periodFilter === p ? "text-white" : "text-gray-600"
-                              }`}>
-                              {p.toUpperCase()}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-
-                      </View>
-
-                      {/* ---------- TYPE FILTER ---------- */}
-                      <Text className="text-[11px] text-gray-400 mb-2 font-semibold">
-                        Transaction Type
-                      </Text>
-
-                      <View className="gap-2 mb-6">
-
-                        {["all", "Income", "Expense", "Investment"].map(type => (
-                          <TouchableOpacity
-                            key={type}
-                            onPress={() => setTypeFilter(type)}
-                            className={`py-3 px-3 rounded-xl flex-row justify-between items-center ${typeFilter === type ? "bg-indigo-50" : "bg-gray-50"
-                              }`}
-                          >
-                            <Text className={`text-sm ${typeFilter === type
-                                ? "text-indigo-600 font-semibold"
-                                : "text-gray-700"
-                              }`}>
-                              {type}
-                            </Text>
-
-                            {typeFilter === type && (
-                              <Ionicons name="checkmark-circle" size={18} color="#6366f1" />
-                            )}
-                          </TouchableOpacity>
-                        ))}
-
-                      </View>
-
-                      {/* ---------- BUTTONS ---------- */}
-                      <View className="flex-row gap-3">
-
-                        {/* CLEAR */}
-                        <TouchableOpacity
-                          onPress={() => {
-                            setPeriodFilter("month");
-                            setTypeFilter("all");
-                          }}
-                          className="flex-1 py-3 rounded-xl bg-gray-100 items-center"
-                        >
-                          <Text className="text-gray-700 font-semibold text-sm">
-                            Reset
-                          </Text>
-                        </TouchableOpacity>
-
-                        {/* CLOSE */}
-                        <TouchableOpacity
-                          onPress={() => setShowFilter(false)}
-                          className="flex-1 py-3 rounded-xl bg-indigo-500 items-center"
-                        >
-                          <Text className="text-white font-semibold text-sm">
-                            Apply
-                          </Text>
-                        </TouchableOpacity>
-
-                      </View>
-
-                      {/* X button (bottom small) */}
-                      <TouchableOpacity
-                        onPress={() => setShowFilter(false)}
-                        className="items-center mt-4"
-                      >
-                        <Ionicons name="close-circle" size={26} color="#9ca3af" />
-                      </TouchableOpacity>
-
-                    </View>
-                  </View>
-                </Modal>
-
-              </TouchableOpacity>
-            </Modal>
 
 
           </>
@@ -441,7 +352,11 @@ export default function Dashboard() {
             : "";
 
           return (
-            <View className="bg-white rounded-2xl px-2 py-2 mb-1 border border-gray-100 shadow-sm">
+            <View className="bg-white rounded-2xl px-2 py-2 mb-1 border border-gray-100 shadow-sm"   style={{
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
+  }}>
 
               <View className="flex-row items-center justify-between">
 
@@ -456,24 +371,25 @@ export default function Dashboard() {
                   {/* TITLE */}
                   <Text
                     numberOfLines={1}
-                    className="font-semibold text-gray-800 text-[12px]"
+                    className="font-semibold text-gray-800 text-[12px]" style={{ color: theme.text }}
                   >
                     {item.title}
                   </Text>
 
                   {/* TAG + DATE (same line) */}
-                  <View className="flex-row items-center mt-1 flex-wrap">
+                  <View className="flex-row items-center mt-1 flex-wrap" >
 
                     {item.tag && (
                       <View className={`px-2 py-[2px] rounded-full mr-2 ${tagColor}`}>
-                        <Text className="text-[10px] font-semibold">
+                        <Text className="text-[10px] font-semibold" >
                           {item.tag}
                         </Text>
                       </View>
                     )}
 
                     {formattedDate !== "" && (
-                      <Text className="text-[11px] text-gray-600">
+                      <Text className="text-[11px] " style={{ color: theme.subText }}
+>
                         {formattedDate}
                       </Text>
                     )}
@@ -562,14 +478,14 @@ export default function Dashboard() {
                       setShowMonthDropdown(false);
                     }}
                     className={`py-3 px-4 mb-2 rounded-xl ${isSelected
-                        ? "bg-indigo-500"
-                        : "bg-gray-50"
+                      ? "bg-indigo-500"
+                      : "bg-gray-50"
                       }`}
                   >
                     <Text
                       className={`text-center font-medium ${isSelected
-                          ? "text-white"
-                          : "text-gray-700"
+                        ? "text-white"
+                        : "text-gray-700"
                         }`}
                     >
                       {item}

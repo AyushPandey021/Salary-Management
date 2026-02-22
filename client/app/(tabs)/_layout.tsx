@@ -11,8 +11,15 @@ import { useTheme } from "../../src/context/ThemeContext";
 function TabBarBackground({ bottom, isDark }) {
   return (
     <View
-      style={{ bottom: bottom + 10 }}
-      className="absolute left-5 right-5 h-[68px] rounded-full overflow-hidden"
+     style={{
+        position: "absolute",
+        left: 16,
+        right: 16,
+        bottom: 8,
+        height: 68,
+        borderRadius: 999,
+        overflow: "hidden",}}
+      // className="absolute left-5 right-5 h-[68px] rounded-full overflow-hidden"
     >
       {/* IMPORTANT — tint changes */}
       <BlurView
@@ -68,14 +75,14 @@ export default function TabLayout() {
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: isDark ? "#9ca3af" : "#6b7280",
 
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: "transparent",
-          borderTopWidth: 0,
-          elevation: 0,
-          height: 75 + insets.bottom,
-          paddingBottom: insets.bottom,
-        },
+       tabBarStyle: {
+  position: "absolute",
+  backgroundColor: "transparent",
+  borderTopWidth: 0,
+  elevation: 0,
+  height: 70,
+},
+
 
         tabBarBackground: () => (
           <TabBarBackground bottom={insets.bottom} isDark={isDark} />
@@ -95,6 +102,14 @@ export default function TabLayout() {
           ),
         }}
       />
+<Tabs.Screen
+  name="transactions"
+  options={{
+    href: null,
+    // tabBarButton: () => null,
+  }}
+/>
+
 
       {/* Report */}
       <Tabs.Screen
@@ -172,6 +187,9 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      
     </Tabs>
   );
 }
+
