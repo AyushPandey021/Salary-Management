@@ -1,220 +1,187 @@
 import {
-View,
-Text,
-TouchableOpacity,
-TextInput,
-ScrollView,
-Alert,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../src/context/ThemeContext";
+import { router } from "expo-router";
 
-type Transaction = {
-_id: string;
-type: "Income" | "Expense" | "Investment";
-amount: number;
-month: string;
-};
+const BASE_URL = "http://localhost:8000";
 
-const BASE_URL = "http://localhost:8000"; // ← CHANGE TO YOUR PC IP
+export default function PlannerHome() {
+  const { theme, isDark } = useTheme();
+  const [targets, setTargets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [balance, setBalance] = useState(0);
 
-export default function Planner() {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
 
-const { theme, isDark } = useTheme();
+  const fetchBalance = async () => {
+    const token = await AsyncStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/balance`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setBalance(data.balance || 0);
+  };
 
-const [activeType, setActiveType] = useState<
-"Income" | "Expense" | "Investment"
-
-> ("Expense");
-
-const [budget, setBudget] = useState("");
-const [usedAmount, setUsedAmount] = useState(0);
-const [loading, setLoading] = useState(false);
-
-const getCurrentMonth = () => {
-const now = new Date();
-return now.toLocaleString("default", {
-month: "long",
-year: "numeric",
-});
-};
-
-const selectedMonth = getCurrentMonth();
-
-const fetchTransactions = async () => {
-try {
-setLoading(true);
-
-
+const fetchTargets = async () => {
   const token = await AsyncStorage.getItem("token");
 
-  const response = await fetch(
-    `${BASE_URL}/transactions?month=${selectedMonth}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
+  const res = await fetch(
+    `${BASE_URL}/targets/?month=${month}&year=${year}`,
+    { headers: { Authorization: `Bearer ${token}` } }
   );
 
-  if (!response.ok) throw new Error("Server error");
+  console.log("STATUS:", res.status);
 
-  const data: Transaction[] = await response.json();
+  const data = await res.json();
+  console.log("TARGET DATA:", data);
 
-  const filtered = data.filter(
-    (item) => item.type === activeType
-  );
-
-  let total = 0;
-  filtered.forEach((item) => {
-    total += Number(item.amount) || 0;
-  });
-
-  setUsedAmount(total);
-
-} catch (err) {
-  console.log(err);
-  Alert.alert("Server Error", "Cannot connect to backend");
-} finally {
+  setTargets(Array.isArray(data) ? data : []);
   setLoading(false);
-}
-
 };
 
-/* IMPORTANT — runs when page opens */
-useEffect(() => {
-fetchTransactions();
-}, [activeType]);
+  useEffect(() => {
+    fetchBalance();
+    fetchTargets();
+  }, []);
 
-const numericBudget = Number(budget) || 0;
-const remaining = numericBudget - usedAmount;
+  const progressColor = (t: any) => {
+    if (t.progress > 100) return "#ef4444";
+    if (t.progress === 100) return "#22c55e";
+    if (t.progress >= 80) return "#f59e0b";
+    return t.color || theme.primary;
+  };
 
-const percentage =
-numericBudget > 0
-? Math.min((usedAmount / numericBudget) * 100, 100)
-: 0;
-
-return (
-<ScrollView
-className="flex-1"
-style={{ backgroundColor: theme.background }}
->
-
-
-  {/* Header */}
-  <LinearGradient
-    colors={
-      isDark
-        ? ["#1f2937", "#020617"]
-        : ["#7C5CFC", "#5F2EEA"]
-    }
-    className="px-6 pt-16 pb-8 rounded-b-[40px]"
-  >
-    <Text className="text-white text-2xl font-bold">
-      Monthly Planner
-    </Text>
-    <Text className="text-white/80 mt-1">
-      {selectedMonth}
-    </Text>
-  </LinearGradient>
-
-  {/* Type Switch */}
-  <View className="flex-row justify-around mt-5">
-    {["Income", "Expense", "Investment"].map((type) => (
-      <TouchableOpacity
-        key={type}
-        className="py-2.5 px-5 rounded-full"
-        style={{
-          backgroundColor:
-            activeType === type
-              ? theme.primary
-              : theme.card,
-        }}
-        onPress={() => setActiveType(type as any)}
-      >
-        <Text
-          className="font-semibold"
-          style={{
-            color:
-              activeType === type
-                ? "#fff"
-                : theme.text,
-          }}
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* HEADER */}
+        <LinearGradient
+          colors={
+            isDark
+              ? ["#111827", "#020617"]
+              : ["#7C5CFC", "#5F2EEA"]
+          }
+          style={{ paddingTop: 60, paddingBottom: 40, paddingHorizontal: 20 }}
         >
-          {type}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
+          <Text style={{ color: "white", opacity: 0.8 }}>
+            Current Balance
+          </Text>
+          <Text style={{ color: "white", fontSize: 36, fontWeight: "bold" }}>
+            ₹ {balance}
+          </Text>
+          <Text style={{ color: "white", opacity: 0.7, marginTop: 4 }}>
+            {now.toLocaleString("default", {
+              month: "long",
+              year: "numeric",
+            })}
+          </Text>
+          <Text style={{ color: "white", marginTop: 8 }}>
+            Active Targets: {targets.length}
+          </Text>
+          <TouchableOpacity
+  onPress={() => router.push("/status")}
+  style={{
+    marginTop: 15,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+  }}
+>
+  <Text style={{ color: "white", fontWeight: "600" }}>
+    View Status
+  </Text>
+</TouchableOpacity>
+        </LinearGradient>
 
-  {/* Budget Card */}
-  <View
-    className="mx-5 mt-5 p-5 rounded-3xl shadow-lg"
-    style={{ backgroundColor: theme.card }}
-  >
-    <Text
-      className="font-semibold mb-3 text-base"
-      style={{ color: theme.text }}
-    >
-      Set Monthly {activeType} Budget
-    </Text>
+        {/* TARGET LIST */}
+        <View style={{ padding: 20 }}>
+          {loading ? (
+            <ActivityIndicator size="large" color={theme.primary} />
+          ) : targets.length === 0 ? (
+            <Text style={{ color: theme.subText }}>
+              No targets created this month.
+            </Text>
+          ) : (
+            targets.map((t) => (
+              <View
+                key={t.id}
+                style={{
+                  backgroundColor: theme.card,
+                  padding: 18,
+                  borderRadius: 20,
+                  marginBottom: 20,
+                  elevation: 5,
+                }}
+              >
+                <Text style={{ fontWeight: "bold", fontSize: 16, color: theme.text }}>
+                  {t.title}
+                </Text>
 
-    <TextInput
-      className="p-4 rounded-xl mb-4"
-      style={{
-        backgroundColor: isDark ? "#2A2A2A" : "#f2f3f7",
-        color: theme.text,
-      }}
-      placeholder="Enter Budget Amount"
-      placeholderTextColor={theme.subText}
-      keyboardType="numeric"
-      value={budget}
-      onChangeText={setBudget}
-    />
+                <Text style={{ color: theme.subText, fontSize: 12 }}>
+                  {t.category} • {t.month}/{t.year}
+                </Text>
 
-    {/* Stats */}
-    <View className="flex-row justify-between mb-3">
-      <Text style={{ color: theme.text }}>
-        Used: ₹ {usedAmount}
-      </Text>
-      <Text style={{ color: theme.text }}>
-        Remaining: ₹ {remaining >= 0 ? remaining : 0}
-      </Text>
-    </View>
+                <Text style={{ marginTop: 10, color: theme.text }}>
+                  ₹ {t.currentAmount || 0} / ₹ {t.targetAmount}
+                </Text>
 
-    {/* Progress */}
-    <View className="h-3 rounded-full overflow-hidden bg-gray-200">
-      <View
-        className="h-3 rounded-full"
+                <View
+                  style={{
+                    height: 10,
+                    backgroundColor: "#e5e7eb",
+                    borderRadius: 20,
+                    marginTop: 6,
+                    overflow: "hidden",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: `${t.progress || 0}%`,
+                      height: "100%",
+                      backgroundColor: progressColor(t),
+                    }}
+                  />
+                </View>
+
+                <Text style={{ marginTop: 6, color: theme.subText }}>
+                  {(t.progress || 0).toFixed(1)}%
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      {/* FLOATING BUTTON */}
+      <TouchableOpacity
+        onPress={() => router.push("/createplanner")}
         style={{
-          width: `${percentage}%`,
-          backgroundColor:
-            percentage >= 100
-              ? "#ef4444"
-              : percentage >= 80
-              ? "#f59e0b"
-              : "#22c55e",
+          position: "absolute",
+          bottom: 30,
+          right: 25,
+          backgroundColor: theme.primary,
+          width: 60,
+          height: 60,
+          borderRadius: 30,
+          alignItems: "center",
+          justifyContent: "center",
+          elevation: 10,
         }}
-      />
+      >
+        <Text style={{ color: "white", fontSize: 30 }}>+</Text>
+      </TouchableOpacity>
     </View>
-
-    <Text
-      className="mt-3 font-bold text-sm"
-      style={{ color: theme.text }}
-    >
-      {percentage.toFixed(1)}% used
-    </Text>
-
-    {remaining < 0 && (
-      <Text className="mt-3 font-semibold text-red-500">
-        ⚠ Budget exceeded by ₹ {Math.abs(remaining)}
-      </Text>
-    )}
-  </View>
-
-  <View className="h-16"/>
-</ScrollView>
-
-
-);
+  );
 }

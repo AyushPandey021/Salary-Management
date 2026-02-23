@@ -56,16 +56,23 @@ def get_transactions_by_month(
 ):
     transactions = list(
         transactions_collection.find(
-            {"user_email": user_email, "month": month}
+            {"user_email": user_email}
         ).sort("created_at", -1)
     )
 
-    for t in transactions:
-        t["_id"] = str(t["_id"])
-        if "created_at" in t:
-            t["created_at"] = t["created_at"].isoformat()
+    result = []
 
-    return transactions
+    for t in transactions:
+        d = t["created_at"]
+
+        formatted = d.strftime("%b %Y")
+
+        if formatted == month:
+            t["_id"] = str(t["_id"])
+            t["created_at"] = d.isoformat()
+            result.append(t)
+
+    return result
 
 
 # -----------------------------

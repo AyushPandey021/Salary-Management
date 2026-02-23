@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { PieChart } from "react-native-chart-kit";
+import { PieChart, LineChart , BarChart } from "react-native-chart-kit";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../src/context/ThemeContext";
@@ -29,6 +29,7 @@ export default function Reports() {
   const [activeType, setActiveType] = useState<
     "All" | "Income" | "Expense" | "Investment"
   >("All");
+  const [chartType, setChartType] = useState<"pie" | "line"| "bar">("pie");
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -37,21 +38,28 @@ export default function Reports() {
   const [showPeriodMenu, setShowPeriodMenu] = useState(false);
 
   // ---------- MONTHS ----------
-  const generateMonths = () => {
-    const now = new Date();
-    return Array.from({ length: 12 }, (_, i) => {
-      const date = new Date(now.getFullYear(), now.getMonth() - i);
-      return date.toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
-    }).reverse();
-  };
+const generateMonths = () => {
+  const now = new Date();
+  const year = now.getFullYear();
 
-  const [months] = useState(generateMonths());
-  const [selectedMonth, setSelectedMonth] = useState(
-    months[months.length - 1]
-  );
+  return Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(year, i);
+    return date.toLocaleString("default", {
+      month: "short",
+      year: "numeric",
+    });
+  });
+};
+
+const months = generateMonths();
+
+const now = new Date();
+const currentMonth = now.toLocaleString("default", {
+  month: "short",
+  year: "numeric",
+});
+
+const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   // ---------- FETCH ----------
   const fetchTransactions = async () => {
@@ -90,15 +98,23 @@ export default function Reports() {
       return data.filter(t => new Date(t.created_at) >= weekAgo);
     }
 
-    if (period === "Monthly") {
-      return data.filter(t => {
-        const d = new Date(t.created_at);
-        return (
-          d.getMonth() === now.getMonth() &&
-          d.getFullYear() === now.getFullYear()
-        );
-      });
-    }
+if (period === "Monthly") {
+  const [selectedMonthName, selectedYear] = selectedMonth.split(" ");
+console.log("Selected:", selectedMonth);
+
+  return data.filter(t => {
+    const d = new Date(t.created_at);
+
+    const transactionMonth = d.toLocaleString("default", {
+      month: "short",
+    });
+
+    return (
+      transactionMonth === selectedMonthName &&
+      d.getFullYear().toString() === selectedYear
+    );
+  });
+}
 
     return data;
   };
@@ -156,57 +172,96 @@ export default function Reports() {
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
 
       {/* HEADER */}
-      <LinearGradient
-        colors={isDark ? ["#1a253f", "#232947"] : ["#8E67FF", "#5F6BFF"]}
-        className="pt-14 pb-6 px-5 rounded-b-[35px]"
-      >
-        <View className="flex-row justify-between items-center">
-          <Text className="text-white text-2xl font-bold">Reports</Text>
+    {/* HEADER */}
+<LinearGradient
+  colors={isDark ? ["#1a253f", "#232947"] : ["#8E67FF", "#5F6BFF"]}
+  style={{
+    paddingTop: 30,
+    paddingBottom: 24,
+    paddingHorizontal: 15,
+    borderBottomLeftRadius: 35,
+    borderBottomRightRadius: 35,
+  }}
+>
+  {/* TITLE + SELECTED MONTH */}
+  <View style={{ marginBottom: 18 }}>
+    <Text
+      style={{
+        color: "#fff",
+        fontSize: 24,
+        fontWeight: "700",
+      }}
+    >
+      Reports
+    </Text>
 
-          <View className="flex-row items-center">
-            <Ionicons name="analytics-outline" size={18} color="white" />
-            <Text className="text-white ml-2">Analytics</Text>
-          </View>
-        </View>
+    <Text
+      style={{
+        color: "rgba(255,255,255,0.85)",
+        marginTop: 4,
+        fontSize: 14,
+        fontWeight: "500",
+      }}
+    >
+      {selectedMonth}
+    </Text>
+  </View>
 
-        {/* MONTH SELECTOR */}
-        <FlatList
-          data={months}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mt-5"
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => {
-            const active = selectedMonth === item;
-            return (
-              <TouchableOpacity
-                onPress={() => setSelectedMonth(item)}
-                className="px-4 py-2 rounded-full mr-3"
-                style={{
-                  backgroundColor: active
-                    ? "#fff"
-                    : "rgba(255,255,255,0.25)",
-                }}
-              >
-                <Text
-                  style={{
-                    color: active ? "#5F6BFF" : "#fff",
-                    fontWeight: "600",
-                  }}
-                >
-                  {item.split(" ")[0]}
-                </Text>
-              </TouchableOpacity>
-            );
+  {/* MONTH SELECTOR */}
+  <FlatList
+    data={months}
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    keyExtractor={(item) => item}
+    contentContainerStyle={{ paddingRight: 20 }}
+    renderItem={({ item }) => {
+      const active = selectedMonth === item;
+
+      return (
+        <TouchableOpacity
+          onPress={() => setSelectedMonth(item)}
+          style={{
+            marginRight: 18,
+            alignItems: "center",
           }}
-        />
-      </LinearGradient>
+        >
+          <Text
+            style={{
+              color: active
+                ? "#fff"
+                : "rgba(255,255,255,0.6)",
+              fontWeight: active ? "700" : "500",
+              fontSize: 15,
+              letterSpacing: 0.5,
+            }}
+          >
+            {item.split(" ")[0]}
+          </Text>
+
+          {/* ACTIVE UNDERLINE */}
+          {active && (
+            <View
+              style={{
+                marginTop: 6,
+                height: 3,
+                width: 26,
+                borderRadius: 20,
+                backgroundColor: "#fff",
+              }}
+            />
+          )}
+        </TouchableOpacity>
+      );
+    }}
+  />
+</LinearGradient>
 
       {/* TYPE SWITCH */}
       <View className="flex-row justify-around mt-1 px-3">
         {["All", "Income", "Expense", "Investment"].map(type => {
           const active = activeType === type;
           return (
+            
             <TouchableOpacity
               key={type}
               onPress={() => setActiveType(type as any)}
@@ -247,7 +302,49 @@ export default function Reports() {
               ? "Money Distribution"
               : `${activeType} Distribution`}
           </Text>
+<View style={{ flexDirection: "row", alignItems: "center" }}>
+  {[
+    { type: "pie", icon: "pie-chart" },
+    { type: "line", icon: "stats-chart" },
+    { type: "bar", icon: "bar-chart" },
+  ].map((item) => {
+    const active = chartType === item.type;
 
+    return (
+      <TouchableOpacity
+        key={item.type}
+        onPress={() => setChartType(item.type as any)}
+        style={{
+          marginHorizontal: 4,
+          borderRadius: 14,
+          overflow: "hidden",
+          elevation: active ? 8 : 2,
+          shadowColor: "#000",
+          shadowOpacity: active ? 0.4 : 0.1,
+          shadowRadius: 6,
+        }}
+      >
+        <LinearGradient
+          colors={
+            active
+              ? ["#8E67FF", "#5F6BFF"]
+              : [isDark ? "#2b2b2b" : "#f1f5f9", isDark ? "#232323" : "#ffffff"]
+          }
+          style={{
+            padding: 6,
+            borderRadius: 12,
+          }}
+        >
+          <Ionicons
+            name={item.icon as any}
+            size={18}
+            color={active ? "#fff" : theme.text}
+          />
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  })}
+</View>
           <TouchableOpacity
             onPress={() => setShowPeriodMenu(!showPeriodMenu)}
             className="flex-row items-center px-4 py-1   rounded-xl"
@@ -265,55 +362,115 @@ export default function Reports() {
         </View>
 
         {/* DROPDOWN */}
-        {showPeriodMenu && (
-          <View className="mx-2 mt-1 rounded-xl " style={{ backgroundColor: theme.background }}>
-            {["All", "Monthly", "Weekly", "Daily"].map(p => (
-              <TouchableOpacity
-                key={p}
-                onPress={() => {
-                  setPeriod(p);
-                  setShowPeriodMenu(false);
-                }}
-                className="px-2 py-1 "
-              >
-                <Text style={{ color: theme.text }}>{p}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+    {showPeriodMenu && (
+  <View
+    style={{
+      position: "absolute",
+      top: 50,
+      right: 20,
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      elevation: 6,
+      paddingVertical: 8,
+      zIndex: 999,
+    }}
+  >
+    {["Monthly", "Weekly", "Daily"].map(p => (
+      <TouchableOpacity
+        key={p}
+        onPress={() => {
+          setPeriod(p);
+          setShowPeriodMenu(false);
+        }}
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+        }}
+      >
+        <Text style={{ color: theme.text }}>{p}</Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+)}
 
         {/* CHART */}
-        <View className="items-center  py-0">
-          {chartData.length > 0 ? (
-          <PieChart
-  data={chartData}
-  width={screenWidth - 50}
-  height={230}
-  accessor="amount"
-  backgroundColor="transparent"
-  paddingLeft="15"
-  // hasLegend={false}   // 👈 VERY IMPORTANT (warna duplicate text ayega)
-  chartConfig={{
-    backgroundGradientFrom: theme.card,
-    backgroundGradientTo: theme.card,
-    decimalPlaces: 0,
-    color: () => theme.text,
-    labelColor: () => theme.text,
-    propsForLabels: {
-      fontSize: 11,
-      fontWeight: "600",
-    },
-  }}
-/>
-          ) : (
-            <View className="items-center py-12">
-              <Ionicons name="analytics-outline" size={42} color={theme.subText} />
-              <Text style={{ color: theme.subText, marginTop: 10 }}>
-                No data available
-              </Text>
-            </View>
-          )}
-        </View>
+<View className="items-center py-0">
+  {chartData.length > 0 ? (
+    chartType === "pie" ? (
+      <PieChart
+        data={chartData}
+        width={screenWidth - 50}
+        height={230}
+        accessor="amount"
+        backgroundColor="transparent"
+        paddingLeft="15"
+        chartConfig={{
+          backgroundGradientFrom: theme.card,
+          backgroundGradientTo: theme.card,
+          decimalPlaces: 0,
+          color: () => theme.text,
+          labelColor: () => theme.text,
+        }}
+      />
+    ) : chartType === "line" ? (
+      <LineChart
+        data={{
+          labels: chartData.map(d => d.name.split(" ")[0]),
+          datasets: [
+            {
+              data: chartData.map(d => d.amount),
+            },
+          ],
+        }}
+        width={screenWidth - 50}
+        height={230}
+        chartConfig={{
+          backgroundGradientFrom: theme.card,
+          backgroundGradientTo: theme.card,
+          decimalPlaces: 0,
+          color: () => theme.primary,
+          labelColor: () => theme.text,
+        }}
+        bezier
+        style={{ borderRadius: 16 }}
+      />
+    ) : (
+      <BarChart
+        data={{
+          labels: chartData.map(d => d.name.split(" ")[0]),
+          datasets: [
+            {
+              data: chartData.map(d => d.amount),
+            },
+          ],
+        }}
+        width={screenWidth - 50}
+        height={230}
+        fromZero
+        showValuesOnTopOfBars
+        chartConfig={{
+          backgroundGradientFrom: theme.card,
+          backgroundGradientTo: theme.card,
+          decimalPlaces: 0,
+          color: () => theme.primary,
+          labelColor: () => theme.text,
+        }}
+        style={{ borderRadius: 16 }}
+      />
+    )
+  ) : (
+    <View className="items-center py-12">
+      <Ionicons
+        name="analytics-outline"
+        size={42}
+        color={theme.subText}
+      />
+      <Text style={{ color: theme.subText, marginTop: 10 }}>
+        No data available
+      </Text>
+    </View>
+  )}
+</View>
       </View>
 
       {/* BREAKDOWN LIST (ONLY SCROLLABLE PART) */}

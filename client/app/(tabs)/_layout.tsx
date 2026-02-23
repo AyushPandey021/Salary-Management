@@ -180,13 +180,27 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "settings" : "settings-outline"}
+             name={focused ? "person" : "person-outline"}
               size={24}
               color={color}
             />
           ),
         }}
       />
+      <Tabs.Screen
+  name="createplanner"
+  options={{
+    href: null,
+
+  }}
+/>
+      <Tabs.Screen
+  name="status"
+  options={{
+    href: null,
+
+  }}
+/>
 
       
     </Tabs>

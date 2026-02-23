@@ -15,11 +15,11 @@ import { useTheme } from "../../src/context/ThemeContext";
 export default function Dashboard() {
   const [showProfile, setShowProfile] = useState(false);
   const [user, setUser] = useState(null);
-const { theme, isDark } = useTheme();
+  const { theme, isDark } = useTheme();
 
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
-const [lastTap, setLastTap] = useState(0);
+  const [lastTap, setLastTap] = useState(0);
 
 
   function generateMonths(year) {
@@ -60,7 +60,14 @@ const [lastTap, setLastTap] = useState(0);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  useEffect(() => {
+    const newMonths = generateMonths(selectedYear);
+    setMonths(newMonths);
 
+    // Auto-select same month index when year changes
+    const monthIndex = new Date().getMonth();
+    setSelectedMonth(newMonths[monthIndex]);
+  }, [selectedYear]);
 
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
@@ -74,7 +81,35 @@ const [lastTap, setLastTap] = useState(0);
 
   const balance = income - expense - investment;
   const BASE_URL = "http://localhost:8000"; // CHANGE IP
+  const filteredTransactions = transactions.filter((t) => {
+    const d = new Date(t.created_at);
 
+    const monthLabel = d.toLocaleString("default", {
+      month: "long",
+      year: "numeric",
+    });
+
+    return monthLabel === selectedMonth;
+  });
+  useEffect(() => {
+    let income = 0;
+    let expense = 0;
+    let investment = 0;
+
+    filteredTransactions.forEach((t) => {
+      if (t.type === "Income") income += Number(t.amount);
+      if (t.type === "Expense") expense += Number(t.amount);
+      if (t.type === "Investment") investment += Number(t.amount);
+    });
+
+    setSummary({
+      income,
+      expense,
+      investment,
+      balance: income - expense - investment,
+    });
+
+  }, [selectedMonth, transactions]);
   const fetchDashboard = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -100,29 +135,44 @@ const [lastTap, setLastTap] = useState(0);
     }
   };
 
+  const fetchTransactions = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const res = await fetch(`${BASE_URL}/transactions/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      setTransactions(data);
+
+    } catch (e) {
+      console.log("Transaction fetch error:", e);
+    }
+  };
 
 
 
 
-
-useFocusEffect(
-  React.useCallback(() => {
-    fetchDashboard();
-    fetchUser();
-  }, [])
-);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchDashboard();
+      fetchUser();
+      fetchTransactions();
+    }, [])
+  );
 
 
   return (
-    <View className="flex-1"style={{ backgroundColor: theme.background }}>
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
 
       {/* Header */}
       <LinearGradient
         colors={
-    isDark
-      ? ["#1a253f", "#232947"]   // dark gradient
-      : ["#8E67FF", "#5F6BFF"]   // light gradient
-  }
+          isDark
+            ? ["#1a253f", "#232947"]   // dark gradient
+            : ["#8E67FF", "#5F6BFF"]   // light gradient
+        }
         className="pt-4 pb-8 px-2 rounded-b-[35px]"
       >
 
@@ -132,7 +182,7 @@ useFocusEffect(
 
 
 
-     
+
           <TouchableOpacity
             onPress={() => setShowMonthDropdown(true)}
             className="flex-row items-center bg-white/20 px-4 py-2 rounded-full"
@@ -157,31 +207,81 @@ useFocusEffect(
         </View>
 
         {/* Balance */}
-        <View className="items-center mt-6">
-          <Text className="text-white/80 text-sm">
-            Current Balance
-          </Text>
-          <Text className="text-white text-4xl font-bold mt-1">
-            ₹ {summary.balance}
-          </Text>
-        </View>
+    <View style={{ alignItems: "center", marginTop: 15 }}>
+
+  {/* Label */}
+  <Text
+    style={{
+      color: "rgba(255,255,255,0.75)",
+      fontSize: 11,
+      letterSpacing: 1,
+      fontWeight: "500",
+      textTransform: "uppercase",
+    }}
+  >
+    Current Balance
+  </Text>
+
+  {/* Amount */}
+  <Text
+    style={{
+      color: "#fff",
+      fontSize: 32,
+      fontWeight: "800",
+      marginTop: 6,
+      letterSpacing: 1,
+    }}
+  >
+    ₹ {summary.balance.toLocaleString()}
+  </Text>
+
+  {/* Sub Info Row */}
+  <View
+    style={{
+      flexDirection: "row",
+      marginTop: 5,
+      alignItems: "center",
+      backgroundColor: "rgba(255,255,255,0.15)",
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: 20,
+    }}
+  >
+    <Ionicons
+      name="wallet-outline"
+      size={14}
+      color="#fff"
+      style={{ marginRight: 6 }}
+    />
+    <Text
+      style={{
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: "500",
+      }}
+    >
+      Updated this month
+    </Text>
+  </View>
+
+</View>
 
       </LinearGradient>
 
 
       {/* Body */}
 
-  <FlatList
-  data={recentTransactions}
-  keyExtractor={(item) => item._id}
-  style={{ flex: 1 }}   // ⭐ IMPORTANT
-  contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 120 }}
-  showsVerticalScrollIndicator={false}
+      <FlatList
+        data={filteredTransactions}
+        keyExtractor={(item) => item._id}
+        style={{ flex: 1 }}   // ⭐ IMPORTANT
+        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
 
 
         ListHeaderComponent={
           <>
-            <Text className="text-sm font-semibold mb-1"  style={{ color: theme.text }}>
+            <Text className="text-sm font-semibold mb-1" style={{ color: theme.text }}>
               Overview
             </Text>
 
@@ -192,19 +292,33 @@ useFocusEffect(
             <View className="flex-row gap-3 px-1 mt-1">
 
               {/* Income */}
-              <View className="flex-1 bg-white rounded-2xl py-1 px-3 shadow-sm"  style={{
-    backgroundColor: theme.card,
-    shadowColor: "#000",
-    shadowOpacity: isDark ? 0.3 : 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  }}>
+              <View className="flex-1 bg-white rounded-2xl py-1 px-3 shadow-sm" style={{
+                backgroundColor: theme.card,
+                shadowColor: "#000",
+                shadowOpacity: isDark ? 0.3 : 0.1,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 4,
+              }}>
                 <View className="items-center">
 
-                  <View className="bg-green-100 p-2 rounded-full mb-1">
-                    <Ionicons name="arrow-down" size={16} color="#16a34a" />
-                  </View>
+                 <View
+  className="rounded-2xl mb-2"
+  style={{
+    shadowColor: "#22c55e",
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  }}
+>
+  <LinearGradient
+    colors={["#4ade80", "#16a34a"]}
+    className="p-2 rounded-2xl items-center justify-center"
+  >
+    <Ionicons name="arrow-down" size={18} color="#fff" />
+  </LinearGradient>
+</View>
 
                   <Text className="text-[11px] text-gray-500">Income</Text>
 
@@ -221,18 +335,32 @@ useFocusEffect(
 
               {/* Expense */}
               <View className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm" style={{
-    backgroundColor: theme.card,
-    shadowColor: "#000",
-    shadowOpacity: isDark ? 0.3 : 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  }}>
+                backgroundColor: theme.card,
+                shadowColor: "#000",
+                shadowOpacity: isDark ? 0.3 : 0.1,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 4,
+              }}>
                 <View className="items-center">
 
-                  <View className="bg-red-100 p-2 rounded-full mb-1">
-                    <Ionicons name="arrow-up" size={16} color="#ef4444" />
-                  </View>
+                <View
+  className="rounded-2xl mb-2"
+  style={{
+    shadowColor: "#ef4444",
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  }}
+>
+  <LinearGradient
+    colors={["#f87171", "#dc2626"]}
+    className="p-2 rounded-2xl items-center justify-center"
+  >
+    <Ionicons name="arrow-up" size={18} color="#fff" />
+  </LinearGradient>
+</View>
 
                   <Text className="text-[11px] text-gray-500">Expense</Text>
 
@@ -249,18 +377,32 @@ useFocusEffect(
               <View numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.6} className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm" style={{
-    backgroundColor: theme.card,
-    shadowColor: "#000",
-    shadowOpacity: isDark ? 0.3 : 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  }}>
+                  backgroundColor: theme.card,
+                  shadowColor: "#000",
+                  shadowOpacity: isDark ? 0.3 : 0.1,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 4 },
+                  elevation: 4,
+                }}>
                 <View className="items-center">
 
-                  <View className="bg-blue-100 p-2 rounded-full mb-1">
-                    <Ionicons name="trending-up" size={16} color="#2563eb" />
-                  </View>
+                  <View
+  className="rounded-2xl mb-2"
+  style={{
+    shadowColor: "#3b82f6",
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  }}
+>
+  <LinearGradient
+    colors={["#60a5fa", "#2563eb"]}
+    className="p-2 rounded-2xl items-center justify-center"
+  >
+    <Ionicons name="trending-up" size={18} color="#fff" />
+  </LinearGradient>
+</View>
 
                   <Text className="text-[11px] text-gray-500">Invest</Text>
 
@@ -279,7 +421,7 @@ useFocusEffect(
 
             <View className="flex-row justify-between items-center mt-2 mb-2 px-1">
 
-              <Text className="text-sm font-semibold"  style={{ color: theme.text }}>
+              <Text className="text-sm font-semibold" style={{ color: theme.text }}>
                 Recent Transactions
               </Text>
 
@@ -288,9 +430,9 @@ useFocusEffect(
 
 
                 <TouchableOpacity
-                  onPress={() => router.push("/transactions")}className="flex-row items-center"
+                  onPress={() => router.push("/transactions")} className="flex-row items-center"
                 >
-                  <Text className="text-indigo-600 font-semibold   mr-1"style={{ color: theme.text ,color:"#6366f1" }}>
+                  <Text className="text-indigo-600 font-semibold   mr-1" style={{ color: theme.text, color: "#6366f1" }}>
                     View All
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color="#6366f1" />
@@ -349,20 +491,20 @@ useFocusEffect(
             : "";
 
           return (
-        <TouchableOpacity
-  onPress={() => {
-    const now = Date.now();
-    if (lastTap && now - lastTap < 300) {
-      router.push({
-        pathname: "/(tabs)/add",
-        params: { edit: JSON.stringify(item) },
-      });
-    }
-    setLastTap(now);
-  }}
-  className="rounded-2xl px-2 py-2 mb-2"
-  style={{ backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }}
->
+            <TouchableOpacity
+              onPress={() => {
+                const now = Date.now();
+                if (lastTap && now - lastTap < 300) {
+                  router.push({
+                    pathname: "/(tabs)/add",
+                    params: { edit: JSON.stringify(item) },
+                  });
+                }
+                setLastTap(now);
+              }}
+              className="rounded-2xl px-2 py-2 mb-2"
+              style={{ backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }}
+            >
 
 
               <View className="flex-row items-center justify-between">
@@ -396,7 +538,7 @@ useFocusEffect(
 
                     {formattedDate !== "" && (
                       <Text className="text-[11px] " style={{ color: theme.subText }}
->
+                      >
                         {formattedDate}
                       </Text>
                     )}
@@ -415,7 +557,7 @@ useFocusEffect(
                 </Text>
 
               </View>
-           </TouchableOpacity>
+            </TouchableOpacity>
           );
         }}
 

@@ -11,10 +11,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { router, useFocusEffect ,useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 // import { BASE_URL } from "../../src/config/api";
 import { useTheme } from "../../src/context/ThemeContext";
-import { FlatList } from  "react-native";
+import { FlatList } from "react-native";
 
 type TabType = "Income" | "Expense" | "Investment";
 
@@ -42,9 +42,9 @@ export default function AddTransaction() {
   const [deleteMode, setDeleteMode] = useState(false);
   const [lastTap, setLastTap] = useState<number>(0);
 
-const params = useLocalSearchParams();
-const editData = params?.edit ? JSON.parse(params.edit as string) : null;
-const isEdit = !!editData;
+  const params = useLocalSearchParams();
+  const editData = params?.edit ? JSON.parse(params.edit as string) : null;
+  const isEdit = !!editData;
 
   /* ---------------- LOAD TAGS ---------------- */
 
@@ -65,72 +65,72 @@ const isEdit = !!editData;
       loadTags();
     }, [activeTab])
   );
-useFocusEffect(
-  React.useCallback(() => {
+  useFocusEffect(
+    React.useCallback(() => {
 
-    if (!params?.edit) {
-      // NEW TRANSACTION → CLEAR FORM
-      setTitle("");
-      setAmount("");
-      setDescription("");
-      setSelectedTag(null);
-      setPaymentType("Cash");
-      setActiveTab("Expense");
-      return;
-    }
+      if (!params?.edit) {
+        // NEW TRANSACTION → CLEAR FORM
+        setTitle("");
+        setAmount("");
+        setDescription("");
+        setSelectedTag(null);
+        setPaymentType("Cash");
+        setActiveTab("Expense");
+        return;
+      }
 
-    const data = JSON.parse(params.edit as string);
+      const data = JSON.parse(params.edit as string);
 
-    setTitle(data.title);
-    setAmount(String(data.amount));
-    setDescription(data.description || "");
-    setSelectedTag(data.tag ? { name: data.tag, emoji: "🏷️" } : null);
-    setActiveTab(data.type);
+      setTitle(data.title);
+      setAmount(String(data.amount));
+      setDescription(data.description || "");
+      setSelectedTag(data.tag ? { name: data.tag, emoji: "🏷️" } : null);
+      setActiveTab(data.type);
 
-  }, [params?.edit])
-);
+    }, [params?.edit])
+  );
 
 
 
   /* ---------------- VALIDATION ---------------- */
   // update tag 
-const updateTag = async () => {
-  if (!editingTag?._id) return;
+  const updateTag = async () => {
+    if (!editingTag?._id) return;
 
-  try {
-    const token = await AsyncStorage.getItem("token");
+    try {
+      const token = await AsyncStorage.getItem("token");
 
-    const res = await fetch(`http://localhost:8000/tags/${editingTag._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        name: editingTag.name?.trim(),
-        emoji: editingTag.emoji || "🏷️",
-      }),
-    });
+      const res = await fetch(`http://localhost:8000/tags/${editingTag._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: editingTag.name?.trim(),
+          emoji: editingTag.emoji || "🏷️",
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      Toast.show({ type: "error", text1: data.detail || "Update failed" });
-      return;
+      if (!res.ok) {
+        Toast.show({ type: "error", text1: data.detail || "Update failed" });
+        return;
+      }
+
+      Toast.show({ type: "success", text1: "Tag updated ✏️" });
+
+      setShowEditTag(false);
+      setEditingTag(null);
+
+      // IMPORTANT
+      await loadTags();
+
+    } catch (err) {
+      Toast.show({ type: "error", text1: "Network error" });
     }
-
-    Toast.show({ type: "success", text1: "Tag updated ✏️" });
-
-    setShowEditTag(false);
-    setEditingTag(null);
-
-    // IMPORTANT
-    await loadTags();
-
-  } catch (err) {
-    Toast.show({ type: "error", text1: "Network error" });
-  }
-};
+  };
 
 
   // delete tag 
@@ -159,57 +159,57 @@ const updateTag = async () => {
   };
 
   /* ---------------- SAVE ---------------- */
-const handleSave = async () => {
-  const token = await AsyncStorage.getItem("token");
+  const handleSave = async () => {
+    const token = await AsyncStorage.getItem("token");
 
-  const payload = {
-    type: activeTab,
-    title,
-    amount: Number(amount),
-    tag: selectedTag?.name || "",
-    description,
-    month: new Date().toLocaleString("default", {
-      month: "long",
-      year: "numeric",
-    }),
+    const payload = {
+      type: activeTab,
+      title,
+      amount: Number(amount),
+      tag: selectedTag?.name || "",
+      description,
+      month: new Date().toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      }),
+    };
+
+    let res;
+
+    if (isEdit) {
+      res = await fetch(`http://localhost:8000/transactions/${editData._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      res = await fetch(`http://localhost:8000/transactions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    if (!res.ok) {
+      Toast.show({ type: "error", text1: "Failed" });
+      return;
+    }
+
+    Toast.show({
+      type: "success",
+      text1: isEdit ? "Transaction Updated ✏️" : "Transaction Added 🎉",
+    });
+
+    router.replace("/(tabs)/transactions");
+    // router.back();
+
   };
-
-  let res;
-
-  if (isEdit) {
-    res = await fetch(`http://localhost:8000/transactions/${editData._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-  } else {
-    res = await fetch(`http://localhost:8000/transactions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-  }
-
-  if (!res.ok) {
-    Toast.show({ type: "error", text1: "Failed" });
-    return;
-  }
-
-  Toast.show({
-    type: "success",
-    text1: isEdit ? "Transaction Updated ✏️" : "Transaction Added 🎉",
-  });
-
-  router.replace("/(tabs)/transactions");
-  // router.back();
-
-};
 
 
   /* ---------------- UI ---------------- */
@@ -292,14 +292,14 @@ const handleSave = async () => {
 
             </Text>
           </TouchableOpacity>
-        <Text
-    className="text-[13px] font-semibold  mt-1"
-    style={{ color: theme.subText, fontWeight: "600" }}
-  >
-    Payment Method
-  </Text>
+          <Text
+            className="text-[13px] font-semibold  mt-1"
+            style={{ color: theme.subText, fontWeight: "600" }}
+          >
+            Payment Method
+          </Text>
           <View className="flex-row flex-wrap mt-3">
-            
+
             {["Cash", "UPI", "Bank", "Card"].map(p => (
               <TouchableOpacity
                 key={p}
@@ -343,174 +343,174 @@ const handleSave = async () => {
       </ScrollView>
 
       {/* TAG MODAL */}
-<Modal visible={showTagModal} transparent animationType="slide">
-  <View className="flex-1 bg-black/40 justify-end">
+      <Modal visible={showTagModal} transparent animationType="slide">
+        <View className="flex-1 bg-black/40 justify-end">
 
-    <View
-      className="rounded-t-3xl pt-5 pb-3"
-      style={{
-        backgroundColor: theme.card,
-        height: "70%",
-      }}
-    >
+          <View
+            className="rounded-t-3xl pt-5 pb-3"
+            style={{
+              backgroundColor: theme.card,
+              height: "70%",
+            }}
+          >
 
-      {/* HEADER */}
-      <View className="flex-row justify-between items-center px-5 mb-3">
-        <Text className="text-lg font-semibold" style={{ color: theme.text }}>
-          Select Tag
-        </Text>
+            {/* HEADER */}
+            <View className="flex-row justify-between items-center px-5 mb-3">
+              <Text className="text-lg font-semibold" style={{ color: theme.text }}>
+                Select Tag
+              </Text>
 
-        <TouchableOpacity onPress={() => setShowAddTag(true)}>
-          <Ionicons name="add-circle" size={26} color={theme.primary} />
-        </TouchableOpacity>
-      </View>
-
-
-      {/* TAG GRID */}
-      {Array.isArray(tags) && tags.length > 0 ? (
-        <FlatList
-          data={tags}
-          numColumns={3}
-          keyExtractor={(item) => item._id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: 10,
-            paddingBottom: 25,
-          }}
-          renderItem={({ item }) => {
-
-         const handlePress = (item) => {
-  const now = Date.now();
-  const DOUBLE_PRESS_DELAY = 280;
-
-  if (lastTap && now - lastTap < DOUBLE_PRESS_DELAY) {
-    // DOUBLE TAP → EDIT
-    setEditingTag({ ...item }); // IMPORTANT (clone object)
-    setShowEditTag(true);
-  } else {
-    // SINGLE TAP → SELECT
-    setSelectedTag(item);
-    setShowTagModal(false);
-  }
-
-  setLastTap(now);
-};
-
-
-            return (
-              <TouchableOpacity
-                onPress={ ()=> handlePress(item)}
-                onLongPress={() => {
-                  setDeleteMode(true);
-                  setEditingTag(item);
-                }}
-                className="flex-1 m-1 rounded-xl items-center justify-center"
-                style={{
-                  backgroundColor: theme.background,
-                  height: 60,
-                }}
-              >
-                {/* DELETE BUTTON */}
-                {deleteMode && editingTag?._id === item._id && (
-                  <TouchableOpacity
-                    onPress={() => deleteTag(item._id)}
-                    style={{
-                      position: "absolute",
-                      top: 5,
-                      right: 5,
-                      zIndex: 10,
-                    }}
-                  >
-                    <Ionicons name="close-circle" size={20} color="#ef4444" />
-                  </TouchableOpacity>
-                )}
-
-                <Text style={{ fontSize: 18 }}>
-                  {item.emoji || "🏷️"}
-                </Text>
-
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    color: theme.text,
-                    fontSize: 12,
-                    marginTop: 6,
-                  }}
-                >
-                  {item.name}
-                </Text>
+              <TouchableOpacity onPress={() => setShowAddTag(true)}>
+                <Ionicons name="add-circle" size={26} color={theme.primary} />
               </TouchableOpacity>
-            );
-          }}
-        />
-      ) : (
-        <View className="flex-1 justify-center items-center">
-          <Text style={{ color: theme.subText }}>
-            No tags yet...
-          </Text>
+            </View>
+
+
+            {/* TAG GRID */}
+            {Array.isArray(tags) && tags.length > 0 ? (
+              <FlatList
+                data={tags}
+                numColumns={3}
+                keyExtractor={(item) => item._id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingHorizontal: 10,
+                  paddingBottom: 25,
+                }}
+                renderItem={({ item }) => {
+
+                  const handlePress = (item) => {
+                    const now = Date.now();
+                    const DOUBLE_PRESS_DELAY = 280;
+
+                    if (lastTap && now - lastTap < DOUBLE_PRESS_DELAY) {
+                      // DOUBLE TAP → EDIT
+                      setEditingTag({ ...item }); // IMPORTANT (clone object)
+                      setShowEditTag(true);
+                    } else {
+                      // SINGLE TAP → SELECT
+                      setSelectedTag(item);
+                      setShowTagModal(false);
+                    }
+
+                    setLastTap(now);
+                  };
+
+
+                  return (
+                    <TouchableOpacity
+                      onPress={() => handlePress(item)}
+                      onLongPress={() => {
+                        setDeleteMode(true);
+                        setEditingTag(item);
+                      }}
+                      className="flex-1 m-1 rounded-xl items-center justify-center"
+                      style={{
+                        backgroundColor: theme.background,
+                        height: 60,
+                      }}
+                    >
+                      {/* DELETE BUTTON */}
+                      {deleteMode && editingTag?._id === item._id && (
+                        <TouchableOpacity
+                          onPress={() => deleteTag(item._id)}
+                          style={{
+                            position: "absolute",
+                            top: 5,
+                            right: 5,
+                            zIndex: 10,
+                          }}
+                        >
+                          <Ionicons name="close-circle" size={20} color="#ef4444" />
+                        </TouchableOpacity>
+                      )}
+
+                      <Text style={{ fontSize: 18 }}>
+                        {item.emoji || "🏷️"}
+                      </Text>
+
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          color: theme.text,
+                          fontSize: 12,
+                          marginTop: 6,
+                        }}
+                      >
+                        {item.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            ) : (
+              <View className="flex-1 justify-center items-center">
+                <Text style={{ color: theme.subText }}>
+                  No tags yet...
+                </Text>
+              </View>
+            )}
+
+
+            {/* CLOSE */}
+            <TouchableOpacity
+              onPress={() => {
+                setDeleteMode(false);
+                setShowTagModal(false);
+              }}
+              className="items-center py-3 border-t"
+              style={{ borderColor: theme.border }}
+            >
+              <Text style={{ color: theme.primary }}>Close</Text>
+            </TouchableOpacity>
+
+          </View>
         </View>
-      )}
+      </Modal>
 
+      {/* // new add  */}
+      <Modal visible={showEditTag} transparent animationType="fade">
+        <View className="flex-1 justify-center items-center bg-black/40">
 
-      {/* CLOSE */}
-      <TouchableOpacity
-        onPress={() => {
-          setDeleteMode(false);
-          setShowTagModal(false);
-        }}
-        className="items-center py-3 border-t"
-        style={{ borderColor: theme.border }}
-      >
-        <Text style={{ color: theme.primary }}>Close</Text>
-      </TouchableOpacity>
+          <View className="w-[85%] p-5 rounded-2xl" style={{ backgroundColor: theme.card }}>
 
-    </View>
-  </View>
-</Modal>
+            <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>
+              Edit Tag
+            </Text>
 
-{/* // new add  */}
-<Modal visible={showEditTag} transparent animationType="fade">
-  <View className="flex-1 justify-center items-center bg-black/40">
+            <TextInput
+              value={editingTag?.emoji ?? ""}
 
-    <View className="w-[85%] p-5 rounded-2xl" style={{ backgroundColor: theme.card }}>
+              onChangeText={(v) => setEditingTag({ ...editingTag, emoji: v })}
+              className="p-3 rounded-xl mb-3"
+              style={{ backgroundColor: theme.background, color: theme.text }}
+            />
 
-      <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>
-        Edit Tag
-      </Text>
+            <TextInput
+              value={editingTag?.name ?? ""}
+              onChangeText={(v) => setEditingTag({ ...editingTag, name: v })}
+              className="p-3 rounded-xl"
+              style={{ backgroundColor: theme.background, color: theme.text }}
+            />
 
-      <TextInput
-     value={editingTag?.emoji ?? ""}
+            <TouchableOpacity
+              className="mt-4 p-3 rounded-xl items-center"
+              style={{ backgroundColor: theme.primary }}
+              onPress={updateTag}
+            >
+              <Text className="text-white">Update Tag</Text>
+            </TouchableOpacity>
 
-        onChangeText={(v) => setEditingTag({ ...editingTag, emoji: v })}
-        className="p-3 rounded-xl mb-3"
-        style={{ backgroundColor: theme.background, color: theme.text }}
-      />
+            <TouchableOpacity
+              className="items-center mt-3"
+              onPress={() => setShowEditTag(false)}
+            >
+              <Text style={{ color: theme.subText }}>Cancel</Text>
+            </TouchableOpacity>
 
-      <TextInput
-        value={editingTag?.name ?? ""}
-        onChangeText={(v) => setEditingTag({ ...editingTag, name: v })}
-        className="p-3 rounded-xl"
-        style={{ backgroundColor: theme.background, color: theme.text }}
-      />
-
-      <TouchableOpacity
-        className="mt-4 p-3 rounded-xl items-center"
-        style={{ backgroundColor: theme.primary }}
-        onPress={updateTag}
-      >
-        <Text className="text-white">Update Tag</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        className="items-center mt-3"
-        onPress={() => setShowEditTag(false)}
-      >
-        <Text style={{ color: theme.subText }}>Cancel</Text>
-      </TouchableOpacity>
-
-    </View>
-  </View>
-</Modal>
+          </View>
+        </View>
+      </Modal>
 
 
       <Modal visible={showAddTag} transparent animationType="fade">
