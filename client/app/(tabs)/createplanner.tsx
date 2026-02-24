@@ -10,7 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../src/context/ThemeContext";
 import { router } from "expo-router";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://192.168.10.48:8000";
 
 export default function CreateTarget() {
   const { theme } = useTheme();

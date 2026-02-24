@@ -67,7 +67,7 @@ const [selectedMonth, setSelectedMonth] = useState(currentMonth);
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:8000/transactions/month?month=${selectedMonth}`,
+        `http://192.168.10.48:8000/transactions/month?month=${selectedMonth}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

@@ -52,7 +52,7 @@ const [lastTap, setLastTap] = useState(0);
     try {
       const token = await AsyncStorage.getItem("token");
 
-      const res = await fetch("http://localhost:8000/transactions/all", {
+      const res = await fetch("http://192.168.10.48:8000/transactions/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -134,7 +134,7 @@ const deleteTransaction = async () => {
           console.log("Deleting:", selectedId);
 
           const res = await fetch(
-            `http://localhost:8000/transactions/${selectedId}`,
+            `http://192.168.10.48:8000/transactions/${selectedId}`,
             {
               method: "DELETE",
               headers: {

@@ -42,7 +42,7 @@ export default function Dashboard() {
     try {
       const token = await AsyncStorage.getItem("token");
 
-      const response = await fetch("http://localhost:8000/auth/me", {
+      const response = await fetch("http://192.168.10.48:8000/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -60,15 +60,32 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
-  useEffect(() => {
-    const newMonths = generateMonths(selectedYear);
-    setMonths(newMonths);
+  // useEffect(() => {
+  //   const newMonths = generateMonths(selectedYear);
+  //   setMonths(newMonths);
 
-    // Auto-select same month index when year changes
-    const monthIndex = new Date().getMonth();
-    setSelectedMonth(newMonths[monthIndex]);
-  }, [selectedYear]);
+  //   // Auto-select same month index when year changes
+  //   const monthIndex = new Date().getMonth();
+  //   setSelectedMonth(newMonths[monthIndex]);
+  // }, [selectedYear]);
+useEffect(() => {
+  const newMonths = generateMonths(selectedYear);
+  setMonths(newMonths);
 
+  // Preserve same month name when year changes
+  const currentMonthName = selectedMonth.split(" ")[0];
+
+  const matchedMonth = newMonths.find((m) =>
+    m.startsWith(currentMonthName)
+  );
+
+  if (matchedMonth) {
+    setSelectedMonth(matchedMonth);
+  } else {
+    setSelectedMonth(newMonths[0]);
+  }
+
+}, [selectedYear]);
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
   const [investment, setInvestment] = useState(0);
@@ -80,17 +97,19 @@ export default function Dashboard() {
 
 
   const balance = income - expense - investment;
-  const BASE_URL = "http://localhost:8000"; // CHANGE IP
-  const filteredTransactions = transactions.filter((t) => {
-    const d = new Date(t.created_at);
+  const BASE_URL = "http://192.168.10.48:8000"; // CHANGE IP
+const filteredTransactions = Array.isArray(transactions)
+  ? transactions.filter((t) => {
+      const d = new Date(t.created_at);
 
-    const monthLabel = d.toLocaleString("default", {
-      month: "long",
-      year: "numeric",
-    });
+      const monthLabel = d.toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      });
 
-    return monthLabel === selectedMonth;
-  });
+      return monthLabel === selectedMonth;
+    })
+  : [];
   useEffect(() => {
     let income = 0;
     let expense = 0;
@@ -232,7 +251,7 @@ export default function Dashboard() {
       letterSpacing: 1,
     }}
   >
-    ₹ {summary.balance.toLocaleString()}
+    {/* ₹ {summary.balance.toLocaleString()} */}
   </Text>
 
   {/* Sub Info Row */}

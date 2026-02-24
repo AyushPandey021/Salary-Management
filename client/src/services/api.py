@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000"; 
+const BASE_URL = "http://192.168.10.48:8000"; 
 
 
 const handleAuth = async () => {

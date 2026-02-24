@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../src/context/ThemeContext";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://192.168.10.48:8000";
 
 export default function PlannerStatus() {
   const { theme } = useTheme();

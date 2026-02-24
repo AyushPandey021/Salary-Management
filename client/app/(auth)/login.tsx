@@ -17,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import logo from "../../assets/t.jpg";
 
 const { width } = Dimensions.get("window");
-const BASE_URL = "http://localhost:8000"; // change IP if needed
+const BASE_URL = "http://192.168.10.48:8000"; // change IP if needed
 
 export default function AuthScreen() {
 

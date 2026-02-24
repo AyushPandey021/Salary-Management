@@ -53,7 +53,7 @@ export default function Settings() {
 
 
       // USER
-      const userRes = await fetch("http://localhost:8000/auth/me", {
+      const userRes = await fetch("http://192.168.10.48:8000/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = await userRes.json();
@@ -61,7 +61,7 @@ export default function Settings() {
       await AsyncStorage.setItem("cached_user", JSON.stringify(userData));
 
       // TRANSACTIONS
-      const transRes = await fetch("http://localhost:8000/transactions/all", {
+      const transRes = await fetch("http://192.168.10.48:8000/transactions/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allTransactions = await transRes.json();
@@ -156,7 +156,7 @@ export default function Settings() {
         text: "Confirm",
         onPress: async () => {
           const token = await AsyncStorage.getItem("token");
-          await fetch("http://localhost:8000/transactions/clear", {
+          await fetch("http://192.168.10.48:8000/transactions/clear", {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           });

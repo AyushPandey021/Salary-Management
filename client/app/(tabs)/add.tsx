@@ -51,7 +51,7 @@ export default function AddTransaction() {
   const loadTags = async () => {
     const token = await AsyncStorage.getItem("token");
 
-    const res = await fetch(`http://localhost:8000/tags/${activeTab}`, {
+    const res = await fetch(`http://192.168.10.48:8000/tags/${activeTab}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -100,7 +100,7 @@ export default function AddTransaction() {
     try {
       const token = await AsyncStorage.getItem("token");
 
-      const res = await fetch(`http://localhost:8000/tags/${editingTag._id}`, {
+      const res = await fetch(`http://192.168.10.48:8000/tags/${editingTag._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +137,7 @@ export default function AddTransaction() {
   const deleteTag = async (id: string) => {
     const token = await AsyncStorage.getItem("token");
 
-    await fetch(`http://localhost:8000/tags/${id}`, {
+    await fetch(`http://192.168.10.48:8000/tags/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -177,7 +177,7 @@ export default function AddTransaction() {
     let res;
 
     if (isEdit) {
-      res = await fetch(`http://localhost:8000/transactions/${editData._id}`, {
+      res = await fetch(`http://192.168.10.48:8000/transactions/${editData._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -186,7 +186,7 @@ export default function AddTransaction() {
         body: JSON.stringify(payload),
       });
     } else {
-      res = await fetch(`http://localhost:8000/transactions`, {
+      res = await fetch(`http://192.168.10.48:8000/transactions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -550,7 +550,7 @@ export default function AddTransaction() {
 
                 const token = await AsyncStorage.getItem("token");
 
-                const res = await fetch(`http://localhost:8000/tags`, {
+                const res = await fetch(`http://192.168.10.48:8000/tags`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
