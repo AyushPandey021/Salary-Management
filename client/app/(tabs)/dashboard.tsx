@@ -56,36 +56,37 @@ export default function Dashboard() {
     }
   };
 
+  
   const [months, setMonths] = useState(generateMonths(currentYear));
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
-  // useEffect(() => {
-  //   const newMonths = generateMonths(selectedYear);
-  //   setMonths(newMonths);
+  useEffect(() => {
+    const newMonths = generateMonths(selectedYear);
+    setMonths(newMonths);
 
-  //   // Auto-select same month index when year changes
-  //   const monthIndex = new Date().getMonth();
-  //   setSelectedMonth(newMonths[monthIndex]);
-  // }, [selectedYear]);
-useEffect(() => {
-  const newMonths = generateMonths(selectedYear);
-  setMonths(newMonths);
+    // Auto-select same month index when year changes
+    const monthIndex = new Date().getMonth();
+    setSelectedMonth(newMonths[monthIndex]);
+  }, [selectedYear]);
+  useEffect(() => {
+    const newMonths = generateMonths(selectedYear);
+    setMonths(newMonths);
 
-  // Preserve same month name when year changes
-  const currentMonthName = selectedMonth.split(" ")[0];
+    // Preserve same month name when year changes
+    const currentMonthName = selectedMonth.split(" ")[0];
 
-  const matchedMonth = newMonths.find((m) =>
-    m.startsWith(currentMonthName)
-  );
+    const matchedMonth = newMonths.find((m) =>
+      m.startsWith(currentMonthName)
+    );
 
-  if (matchedMonth) {
-    setSelectedMonth(matchedMonth);
-  } else {
-    setSelectedMonth(newMonths[0]);
-  }
+    if (matchedMonth) {
+      setSelectedMonth(matchedMonth);
+    } else {
+      setSelectedMonth(newMonths[0]);
+    }
 
-}, [selectedYear]);
+  }, [selectedYear]);
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
   const [investment, setInvestment] = useState(0);
@@ -93,13 +94,14 @@ useEffect(() => {
   const [transactions, setTransactions] = useState([]);
 
 
-
+console.log("Transactions:", transactions);
+console.log("Filtered:", filteredTransactions);
 
 
   const balance = income - expense - investment;
   const BASE_URL = "http://192.168.10.48:8000"; // CHANGE IP
-const filteredTransactions = Array.isArray(transactions)
-  ? transactions.filter((t) => {
+  const filteredTransactions = Array.isArray(transactions)
+    ? transactions.filter((t) => {
       const d = new Date(t.created_at);
 
       const monthLabel = d.toLocaleString("default", {
@@ -109,7 +111,7 @@ const filteredTransactions = Array.isArray(transactions)
 
       return monthLabel === selectedMonth;
     })
-  : [];
+    : [];
   useEffect(() => {
     let income = 0;
     let expense = 0;
@@ -139,7 +141,12 @@ const filteredTransactions = Array.isArray(transactions)
       });
 
       const summaryData = await summaryRes.json();
-      setSummary(summaryData);
+    setSummary({
+  income: summaryData?.income ?? 0,
+  expense: summaryData?.expense ?? 0,
+  investment: summaryData?.investment ?? 0,
+  balance: summaryData?.balance ?? 0,
+});
 
       // 🔹 recent 4 transactions
       const recentRes = await fetch(`${BASE_URL}/transactions/recent`, {
@@ -226,64 +233,65 @@ const filteredTransactions = Array.isArray(transactions)
         </View>
 
         {/* Balance */}
-    <View style={{ alignItems: "center", marginTop: 15 }}>
+        <View style={{ alignItems: "center", marginTop: 15 }}>
 
-  {/* Label */}
-  <Text
-    style={{
-      color: "rgba(255,255,255,0.75)",
-      fontSize: 11,
-      letterSpacing: 1,
-      fontWeight: "500",
-      textTransform: "uppercase",
-    }}
-  >
-    Current Balance
-  </Text>
+          {/* Label */}
+          <Text
+            style={{
+              color: "rgba(255,255,255,0.75)",
+              fontSize: 11,
+              letterSpacing: 1,
+              fontWeight: "500",
+              textTransform: "uppercase",
+            }}
+          >
+            Current Balance
+          </Text>
 
-  {/* Amount */}
-  <Text
-    style={{
-      color: "#fff",
-      fontSize: 32,
-      fontWeight: "800",
-      marginTop: 6,
-      letterSpacing: 1,
-    }}
-  >
-    {/* ₹ {summary.balance.toLocaleString()} */}
-  </Text>
+          {/* Amount */}
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 32,
+              fontWeight: "800",
+              marginTop: 6,
+              letterSpacing: 1,
+            }}
+          >
+            {/* ₹ {summary.balance.toLocaleString()} */}
+            ₹ {(summary?.balance ?? 0).toLocaleString()}
+          </Text>
 
-  {/* Sub Info Row */}
-  <View
-    style={{
-      flexDirection: "row",
-      marginTop: 5,
-      alignItems: "center",
-      backgroundColor: "rgba(255,255,255,0.15)",
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 20,
-    }}
-  >
-    <Ionicons
-      name="wallet-outline"
-      size={14}
-      color="#fff"
-      style={{ marginRight: 6 }}
-    />
-    <Text
-      style={{
-        color: "#fff",
-        fontSize: 12,
-        fontWeight: "500",
-      }}
-    >
-      Updated this month
-    </Text>
-  </View>
+          {/* Sub Info Row */}
+          <View
+            style={{
+              flexDirection: "row",
+              marginTop: 5,
+              alignItems: "center",
+              backgroundColor: "rgba(255,255,255,0.15)",
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+              borderRadius: 20,
+            }}
+          >
+            <Ionicons
+              name="wallet-outline"
+              size={14}
+              color="#fff"
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: "500",
+              }}
+            >
+              Updated this month
+            </Text>
+          </View>
 
-</View>
+        </View>
 
       </LinearGradient>
 
@@ -292,17 +300,21 @@ const filteredTransactions = Array.isArray(transactions)
 
       <FlatList
         data={filteredTransactions}
-        keyExtractor={(item) => item._id}
+     keyExtractor={(item, index) => item?._id?.toString() ?? index.toString()}
+     
         style={{ flex: 1 }}   // ⭐ IMPORTANT
         contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
 
 
         ListHeaderComponent={
+          
           <>
             <Text className="text-sm font-semibold mb-1" style={{ color: theme.text }}>
               Overview
             </Text>
+
+            
 
             {/* Cards */}
             {/* STATS CARDS */}
@@ -321,23 +333,23 @@ const filteredTransactions = Array.isArray(transactions)
               }}>
                 <View className="items-center">
 
-                 <View
-  className="rounded-2xl mb-2"
-  style={{
-    shadowColor: "#22c55e",
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  }}
->
-  <LinearGradient
-    colors={["#4ade80", "#16a34a"]}
-    className="p-2 rounded-2xl items-center justify-center"
-  >
-    <Ionicons name="arrow-down" size={18} color="#fff" />
-  </LinearGradient>
-</View>
+                  <View
+                    className="rounded-2xl mb-2"
+                    style={{
+                      shadowColor: "#22c55e",
+                      shadowOpacity: 0.5,
+                      shadowRadius: 10,
+                      shadowOffset: { width: 0, height: 6 },
+                      elevation: 8,
+                    }}
+                  >
+                    <LinearGradient
+                      colors={["#4ade80", "#16a34a"]}
+                      className="p-2 rounded-2xl items-center justify-center"
+                    >
+                      <Ionicons name="arrow-down" size={18} color="#fff" />
+                    </LinearGradient>
+                  </View>
 
                   <Text className="text-[11px] text-gray-500">Income</Text>
 
@@ -346,7 +358,7 @@ const filteredTransactions = Array.isArray(transactions)
                     adjustsFontSizeToFit
                     minimumFontScale={0.6}
                     className="text-green-600  text-[15px] font-semibold mt-1">
-                    ₹ {summary.income}
+                    ₹ {summary.income ??0}
                   </Text>
 
                 </View>
@@ -363,30 +375,30 @@ const filteredTransactions = Array.isArray(transactions)
               }}>
                 <View className="items-center">
 
-                <View
-  className="rounded-2xl mb-2"
-  style={{
-    shadowColor: "#ef4444",
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  }}
->
-  <LinearGradient
-    colors={["#f87171", "#dc2626"]}
-    className="p-2 rounded-2xl items-center justify-center"
-  >
-    <Ionicons name="arrow-up" size={18} color="#fff" />
-  </LinearGradient>
-</View>
+                  <View
+                    className="rounded-2xl mb-2"
+                    style={{
+                      shadowColor: "#ef4444",
+                      shadowOpacity: 0.5,
+                      shadowRadius: 10,
+                      shadowOffset: { width: 0, height: 6 },
+                      elevation: 8,
+                    }}
+                  >
+                    <LinearGradient
+                      colors={["#f87171", "#dc2626"]}
+                      className="p-2 rounded-2xl items-center justify-center"
+                    >
+                      <Ionicons name="arrow-up" size={18} color="#fff" />
+                    </LinearGradient>
+                  </View>
 
                   <Text className="text-[11px] text-gray-500">Expense</Text>
 
                   <Text numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.6} className="text-red-500 text-[15px] font-semibold mt-1">
-                    ₹ {summary.expense}
+                    ₹ {summary.expense ?? 0 }
                   </Text>
 
                 </View>
@@ -406,30 +418,31 @@ const filteredTransactions = Array.isArray(transactions)
                 <View className="items-center">
 
                   <View
-  className="rounded-2xl mb-2"
-  style={{
-    shadowColor: "#3b82f6",
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  }}
->
-  <LinearGradient
-    colors={["#60a5fa", "#2563eb"]}
-    className="p-2 rounded-2xl items-center justify-center"
-  >
-    <Ionicons name="trending-up" size={18} color="#fff" />
-  </LinearGradient>
-</View>
+                    className="rounded-2xl mb-2"
+                    style={{
+                      shadowColor: "#3b82f6",
+                      shadowOpacity: 0.5,
+                      shadowRadius: 10,
+                      shadowOffset: { width: 0, height: 6 },
+                      elevation: 8,
+                    }}
+                  >
+                    <LinearGradient
+                      colors={["#60a5fa", "#2563eb"]}
+                      className="p-2 rounded-2xl items-center justify-center"
+                    >
+                      <Ionicons name="trending-up" size={18} color="#fff" />
+                    </LinearGradient>
+                  </View>
 
                   <Text className="text-[11px] text-gray-500">Invest</Text>
 
                   <Text className="text-blue-600 text-[15px] font-semibold mt-1">
-                    ₹ {summary.investment}
+                    ₹ {summary.investment ?? 0 }
                   </Text>
 
                 </View>
+                
               </View>
 
             </View>

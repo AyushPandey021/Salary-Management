@@ -93,7 +93,7 @@ export default function AuthScreen() {
           </View>
 
           <Text className="text-white text-2xl font-bold mt-3">
-            TrackPa<span className="text-purple-500">Y</span>
+            TrackPaY
           </Text>
 
           <Text className="text-white/80 text-sm mt-1">
