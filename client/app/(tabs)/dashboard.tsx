@@ -56,7 +56,7 @@ export default function Dashboard() {
     }
   };
 
-  
+
   const [months, setMonths] = useState(generateMonths(currentYear));
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
@@ -94,8 +94,8 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState([]);
 
 
-console.log("Transactions:", transactions);
-console.log("Filtered:", filteredTransactions);
+  console.log("Transactions:", transactions);
+  console.log("Filtered:", filteredTransactions);
 
 
   const balance = income - expense - investment;
@@ -141,12 +141,12 @@ console.log("Filtered:", filteredTransactions);
       });
 
       const summaryData = await summaryRes.json();
-    setSummary({
-  income: summaryData?.income ?? 0,
-  expense: summaryData?.expense ?? 0,
-  investment: summaryData?.investment ?? 0,
-  balance: summaryData?.balance ?? 0,
-});
+      setSummary({
+        income: summaryData?.income ?? 0,
+        expense: summaryData?.expense ?? 0,
+        investment: summaryData?.investment ?? 0,
+        balance: summaryData?.balance ?? 0,
+      });
 
       // 🔹 recent 4 transactions
       const recentRes = await fetch(`${BASE_URL}/transactions/recent`, {
@@ -245,7 +245,7 @@ console.log("Filtered:", filteredTransactions);
               textTransform: "uppercase",
             }}
           >
-            Current Balance
+            Current Balance dfgh rsgtrdhy
           </Text>
 
           {/* Amount */}
@@ -300,21 +300,21 @@ console.log("Filtered:", filteredTransactions);
 
       <FlatList
         data={filteredTransactions}
-     keyExtractor={(item, index) => item?._id?.toString() ?? index.toString()}
-     
+        keyExtractor={(item, index) => item?._id?.toString() ?? index.toString()}
+
         style={{ flex: 1 }}   // ⭐ IMPORTANT
         contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
 
 
         ListHeaderComponent={
-          
+
           <>
             <Text className="text-sm font-semibold mb-1" style={{ color: theme.text }}>
               Overview
             </Text>
 
-            
+
 
             {/* Cards */}
             {/* STATS CARDS */}
@@ -358,7 +358,7 @@ console.log("Filtered:", filteredTransactions);
                     adjustsFontSizeToFit
                     minimumFontScale={0.6}
                     className="text-green-600  text-[15px] font-semibold mt-1">
-                    ₹ {summary.income ??0}
+                    ₹ {summary.income ?? 0}
                   </Text>
 
                 </View>
@@ -398,7 +398,7 @@ console.log("Filtered:", filteredTransactions);
                   <Text numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.6} className="text-red-500 text-[15px] font-semibold mt-1">
-                    ₹ {summary.expense ?? 0 }
+                    ₹ {summary.expense ?? 0}
                   </Text>
 
                 </View>
@@ -438,11 +438,11 @@ console.log("Filtered:", filteredTransactions);
                   <Text className="text-[11px] text-gray-500">Invest</Text>
 
                   <Text className="text-blue-600 text-[15px] font-semibold mt-1">
-                    ₹ {summary.investment ?? 0 }
+                    ₹ {summary.investment ?? 0}
                   </Text>
 
                 </View>
-                
+
               </View>
 
             </View>

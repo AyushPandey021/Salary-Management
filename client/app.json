@@ -4,7 +4,6 @@
     "slug": "MyFirstApp",
     "version": "1.0.0",
     "orientation": "portrait",
-  
     "scheme": "myfirstapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
@@ -12,25 +11,23 @@
       "supportsTablet": true
     },
     "android": {
-  "usesCleartextTraffic": true,
-  "adaptiveIcon": {
-    "backgroundColor": "#E6F4FE"
-   
-  },
-  "edgeToEdgeEnabled": true,
-  "predictiveBackGestureEnabled": false
-},
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.MyFirstApp"
+    },
     "web": {
       "bundler": "metro",
       "output": "static"
-     
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-         
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -40,9 +37,9 @@
         }
       ]
     ],
- "experiments": {
-  "typedRoutes": true,
-  "reactCompiler": false
-}
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": false
+    }
   }
 }
