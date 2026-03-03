@@ -53,7 +53,7 @@ export default function Settings() {
 
 
       // USER
-      const userRes = await fetch("http://192.168.10.48:8000/auth/me", {
+      const userRes = await fetch("http://10.0.2.2:8000/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = await userRes.json();
@@ -61,7 +61,7 @@ export default function Settings() {
       await AsyncStorage.setItem("cached_user", JSON.stringify(userData));
 
       // TRANSACTIONS
-      const transRes = await fetch("http://192.168.10.48:8000/transactions/all", {
+      const transRes = await fetch("http://10.0.2.2:8000/transactions/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allTransactions = await transRes.json();
@@ -156,7 +156,7 @@ export default function Settings() {
         text: "Confirm",
         onPress: async () => {
           const token = await AsyncStorage.getItem("token");
-          await fetch("http://192.168.10.48:8000/transactions/clear", {
+          await fetch("http://10.0.2.2:8000/transactions/clear", {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -209,61 +209,88 @@ export default function Settings() {
           </View>
         )}
       </View>
-      {/* ---------------- PERIOD FILTER ---------------- */} <View className="mx-5 mt-6">
-        <Text className="mb-2 font-semibold" style={{ color: theme.text }}>
-          Filter Analytics </Text>
+      {/* ---------------- PERIOD FILTER ---------------- */} 
 
-        <View className="flex-row justify-between">
-          {["All", "Monthly", "Weekly", "Today"].map(p => {
-            const active = period === p;
+<View className="mx-5 mt-6">
+  <Text className="mb-2 font-semibold" style={{ color: theme.text }}>
+    Filter Analytics
+  </Text>
 
-           
-  return (
-    <TouchableOpacity
-      key={p}
-      onPress={() => setPeriod(p)}
-      className="px-4 py-2 rounded-full"
-      style={{
-        backgroundColor: active ? theme.primary : theme.card,
-        elevation: active ? 5 : 2,
-      }}
-    >
-      <Text
-        style={{
-          color: active ? "#fff" : theme.text,
-          fontWeight: "600"
-        }}
-      >
-        {p}
-      </Text>
-    </TouchableOpacity>
-  );
-})}
+  <View className="flex-row justify-between">
+    {["All", "Monthly", "Weekly", "Today"].map((p) => {
+      const active = period === p;
 
-
+      return (
+        <TouchableOpacity
+          key={p}
+          onPress={() => setPeriod(p)}
+          className="px-4 py-2 rounded-full"
+          style={{
+            backgroundColor: active ? theme.primary : theme.card,
+            elevation: active ? 5 : 2,
+          }}
+        >
+          <Text
+            style={{
+              color: active ? "#fff" : theme.text,
+              fontWeight: "600",
+            }}
+          >
+            {p}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
   </View>
-      </View>
+</View>
+
+
+    
 
       {/* ---------------- TRANSACTION COUNT ---------------- */}
       <View className="mx-5 mt-5 p-4 rounded-2xl" style={{ backgroundColor: theme.card }}>
-        <Text style={{ color: theme.subText }}>
-          Transactions ({period}) </Text>
+       <Text style={{ color: theme.subText }}>
+  {`Transactions (${period})`}
+</Text>
 
         <Text className="text-2xl font-bold" style={{ color: theme.primary }}>
           {stats.totalTransactions} </Text> </View>
 
-      {/* ---------------- MONEY STATS ---------------- */} <View className="mx-5 mt-5 flex-row justify-between">
+      {/* ---------------- MONEY STATS ---------------- */}
+{/* ---------------- MONEY STATS ---------------- */}
+<View className="mx-5 mt-5 flex-row justify-between">
 
-        <View className="flex-1 mr-2 p-4 rounded-2xl" style={{ backgroundColor: theme.card }}>
-          <Text style={{ color: theme.subText }}>Income</Text> <Text className="text-green-500 text-lg font-bold">₹ {stats.income}</Text> </View>
+  <View
+    className="flex-1 mr-2 p-4 rounded-2xl"
+    style={{ backgroundColor: theme.card }}
+  >
+    <Text style={{ color: theme.subText }}>Income</Text>
+    <Text className="text-green-500 text-lg font-bold">
+      {`₹ ${stats.income}`}
+    </Text>
+  </View>
 
-        <View className="flex-1 mx-2 p-4 rounded-2xl" style={{ backgroundColor: theme.card }}>
-          <Text style={{ color: theme.subText }}>Expense</Text> <Text className="text-red-500 text-lg font-bold">₹ {stats.expense}</Text> </View>
+  <View
+    className="flex-1 mx-2 p-4 rounded-2xl"
+    style={{ backgroundColor: theme.card }}
+  >
+    <Text style={{ color: theme.subText }}>Expense</Text>
+    <Text className="text-red-500 text-lg font-bold">
+      {`₹ ${stats.expense}`}
+    </Text>
+  </View>
 
-        <View className="flex-1 ml-2 p-4 rounded-2xl" style={{ backgroundColor: theme.card }}>
-          <Text style={{ color: theme.subText }}>Invest</Text> <Text className="text-blue-500 text-lg font-bold">₹ {stats.investment}</Text> </View>
+  <View
+    className="flex-1 ml-2 p-4 rounded-2xl"
+    style={{ backgroundColor: theme.card }}
+  >
+    <Text style={{ color: theme.subText }}>Invest</Text>
+    <Text className="text-blue-500 text-lg font-bold">
+      {`₹ ${stats.investment}`}
+    </Text>
+  </View>
 
-      </View>
+</View> 
 
       {/* ---------------- DARK MODE ---------------- */}
       <View className="mx-5 mt-6 p-5 rounded-3xl" style={{ backgroundColor: theme.card }}> <View className="flex-row justify-between items-center"> <View className="flex-row items-center">

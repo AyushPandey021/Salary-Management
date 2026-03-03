@@ -287,7 +287,7 @@ export default function Dashboard() {
                 fontWeight: "500",
               }}
             >
-              Updated this month
+              Updated this month adsfd
             </Text>
           </View>
 
