@@ -93,7 +93,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 
 npx expo start -c
-expo run in android studio : 
+expo run in android studio : npx expo run:android
 
 Testing user:
 ak 
