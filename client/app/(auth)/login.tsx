@@ -14,10 +14,10 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import API from "../../src/services/api"
 import logo from "../../assets/t.jpg";
 
 const { width } = Dimensions.get("window");
-const BASE_URL = "http://10.0.2.2:8000"; // change IP if needed
 
 export default function AuthScreen() {
 
@@ -26,13 +26,13 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
 
-  /* dynamic slider width */
-  const TAB_WIDTH = width * 0.7 / 2;
+  const TAB_WIDTH = (width * 0.7) / 2;
 
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const switchTab = (login:boolean) => {
     setIsLogin(login);
+
     Animated.spring(slideAnim, {
       toValue: login ? 0 : TAB_WIDTH,
       useNativeDriver: true,
@@ -41,42 +41,44 @@ export default function AuthScreen() {
 
   const handleAuth = async () => {
     try {
-      const endpoint = isLogin ? "login" : "signup";
 
-      const response = await fetch(`${BASE_URL}/auth/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          isLogin
-            ? { email, password }
-            : { name, email, password }
-        ),
-      });
+      const endpoint = isLogin ? "/auth/login" : "/auth/signup";
 
-      const data = await response.json();
+      const payload = isLogin
+        ? { email, password }
+        : { name, email, password };
 
-      if (response.ok) {
-        if (isLogin) {
-          await AsyncStorage.setItem("token", data.access_token);
-          router.replace("/dashboard");
-        } else {
-          Alert.alert("Signup Successful 🎉", "Please Login");
-          switchTab(true);
-        }
+      const res = await API.post(endpoint, payload);
+
+      const data = res.data;
+
+      if (isLogin) {
+
+        await AsyncStorage.setItem("token", data.access_token);
+
+        router.replace("/dashboard");
+
       } else {
-        Alert.alert("Error ❌", data.detail || "Invalid credentials");
+
+        Alert.alert("Signup Successful 🎉", "Please Login");
+
+        switchTab(true);
       }
 
-    } catch {
-      Alert.alert("Server Error ❌", "Check backend connection");
+    } catch (error:any) {
+
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Invalid credentials";
+
+      Alert.alert("Error ❌", message);
     }
   };
 
   return (
-    <LinearGradient
-      colors={["#5F6BFF", "#8E67FF"]}
-      className="flex-1"
-    >
+    <LinearGradient colors={["#5F6BFF", "#8E67FF"]} className="flex-1">
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1 justify-center px-6"
@@ -84,6 +86,7 @@ export default function AuthScreen() {
 
         {/* LOGO */}
         <View className="items-center mb-2">
+
           <View className="w-26 h-16 bg-white/20 rounded-2xl items-center justify-center">
             <Image
               source={logo}
@@ -99,6 +102,7 @@ export default function AuthScreen() {
           <Text className="text-white/80 text-sm mt-1">
             Manage your money smartly
           </Text>
+
         </View>
 
         {/* CARD */}
@@ -109,6 +113,7 @@ export default function AuthScreen() {
             style={{ width: width * 0.7 }}
             className="self-center bg-white/20 rounded-full mb-6 overflow-hidden"
           >
+
             <Animated.View
               style={{
                 width: TAB_WIDTH,
@@ -118,12 +123,13 @@ export default function AuthScreen() {
             />
 
             <View className="flex-row">
+
               <TouchableOpacity
                 className="flex-1 py-3 items-center"
                 onPress={() => switchTab(true)}
               >
                 <Text className={`font-semibold ${isLogin ? "text-indigo-600" : "text-white"}`}>
-                  Login 
+                  Login
                 </Text>
               </TouchableOpacity>
 
@@ -135,10 +141,13 @@ export default function AuthScreen() {
                   Signup
                 </Text>
               </TouchableOpacity>
+
             </View>
+
           </View>
 
           {/* INPUTS */}
+
           {!isLogin && (
             <TextInput
               placeholder="Full Name"
@@ -168,18 +177,22 @@ export default function AuthScreen() {
           />
 
           {/* BUTTON */}
+
           <TouchableOpacity
             onPress={handleAuth}
             className="bg-white py-4 rounded-xl items-center mt-5"
           >
+
             <Text className="text-indigo-600 font-bold text-lg">
               {isLogin ? "Login" : "Create Account"}
             </Text>
+
           </TouchableOpacity>
 
         </View>
 
       </KeyboardAvoidingView>
+
     </LinearGradient>
   );
 }

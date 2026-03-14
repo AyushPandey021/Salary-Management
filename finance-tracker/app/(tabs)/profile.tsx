@@ -29,16 +29,14 @@ export default function Profile() {
 
       const token = await AsyncStorage.getItem("token");
 
-      if (!token) {
-        router.replace("/");
-        return;
-      }
+   if (!token) {
+  router.replace("/login");
+  return;
+}
 
-      const res = await API.get("/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+
+ const res = await API.get("/auth/me");
+
 
       setUser(res.data);
 
@@ -74,11 +72,9 @@ const handleLogout = async () => {
 
             await AsyncStorage.removeItem("token");
 
-            // clear axios auth header if you set it globally
-            delete API.defaults.headers.common["Authorization"];
+            setUser(null);
 
-            // reset navigation stack
-            router.replace("/");
+            router.replace("/login");
 
           } catch (error) {
             console.log("Logout error:", error);
@@ -90,6 +86,8 @@ const handleLogout = async () => {
   );
 
 };
+
+
   if (loading) {
     return (
       <View style={[styles.loading, { backgroundColor: theme.background }]}>

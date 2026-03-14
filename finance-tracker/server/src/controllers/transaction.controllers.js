@@ -61,3 +61,109 @@ export const getTransactions = async (req, res) => {
 
   }
 };
+
+
+
+export const getSummary = async (req, res) => {
+  try {
+
+    const transactions = await Transaction.find({
+      userId: req.user.id
+    });
+
+    let income = 0;
+    let expense = 0;
+    let investment = 0;
+
+    transactions.forEach(t => {
+
+      const amount = Number(t.amount);
+
+      if (t.type === "Income") {
+        income += amount;
+      }
+
+      if (t.type === "Expense") {
+        expense += amount;
+      }
+
+      if (t.type === "Investment") {
+        investment += amount;
+      }
+
+    });
+
+    const balance = income - expense - investment;
+
+    res.json({
+      income,
+      expense,
+      investment,
+      balance
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message
+    });
+
+  }
+};
+
+
+export const getRecentTransactions = async (req, res) => {
+  try {
+
+    const transactions = await Transaction.find({
+      userId: req.user.id
+    })
+    .sort({ createdAt: -1 })
+    .limit(5);
+
+    res.json(transactions);
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message
+    });
+
+  }
+};
+export const getTransactionsByMonth = async (req, res) => {
+  try {
+
+    const { month } = req.query;
+
+    if (!month) {
+      return res.status(400).json({
+        message: "Month required"
+      });
+    }
+
+    const [monthName, year] = month.split(" ");
+
+    const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+
+    const startDate = new Date(year, monthIndex, 1, 0, 0, 0);
+    const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59);
+
+    const transactions = await Transaction.find({
+      userId: req.user.id,
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    }).sort({ createdAt: -1 });
+
+    res.json(transactions);
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message
+    });
+
+  }
+};

@@ -67,57 +67,64 @@ export default function AuthScreen() {
     return true;
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
 
-    if (!validate()) return;
+  if (!validate()) return;
 
-    try {
+  try {
 
-      let res;
+    let res;
 
-      if (mode === "signup") {
-
-        res = await API.post("/register", {
-          name,
-          email,
-          password
-        });
-
-        Toast.show({
-          type: "success",
-          text1: "Account created successfully 🎉"
-        });
-
-      } else {
-
-        res = await API.post("/login", {
-          email,
-          password
-        });
-
-        Toast.show({
-          type: "success",
-          text1: "Login successful ✅"
-        });
-      }
-
-      await AsyncStorage.setItem("token", res.data.token);
-
-      setTimeout(() => {
-        router.replace("/(tabs)/dashboard");
-      }, 1200);
-
-    } catch (error: any) {
-
-      const message =
-        error?.response?.data?.message || "Authentication failed";
+    if (mode === "signup") {
+      res = await API.post("/auth/register", {
+        name,
+        email,
+        password
+      });
 
       Toast.show({
-        type: "error",
-        text1: message
+        type: "success",
+        text1: "Account created successfully 🎉"
+      });
+
+    } else {
+
+      res = await API.post("/auth/login", {
+        email,
+        password
+      });
+
+      Toast.show({
+        type: "success",
+        text1: "Login successful ✅"
       });
     }
-  };
+
+    const token = res.data.token || res.data.access_token;
+
+    if (token) {
+      await AsyncStorage.setItem("token", token);
+    }
+
+    setTimeout(() => {
+      router.replace("/(tabs)/dashboard");
+    }, 1200);
+
+  } catch (error: any) {
+
+    console.log("AUTH ERROR:", error?.response?.data);
+
+    const message =
+      error?.response?.data?.message ||
+      error?.response?.data?.detail ||
+      "Authentication failed";
+
+    Toast.show({
+      type: "error",
+      text1: message
+    });
+  }
+};
 
   return (
     <View style={styles.container}>

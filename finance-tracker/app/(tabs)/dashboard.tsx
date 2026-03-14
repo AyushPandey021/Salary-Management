@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../src/context/ThemeContext";
-
+import API from "../../src/services/api";
 export default function Dashboard() {
 
   const { theme, isDark } = useTheme();
@@ -30,61 +30,42 @@ export default function Dashboard() {
   const [transactions,setTransactions] = useState([]);
   const [recentTransactions,setRecentTransactions] = useState([]);
 
-  const BASE_URL = "http://192.168.10.47:5000/api";
+  // const BASE_URL = "http://192.168.10.47:5000/api";
 
   /* ---------------- FETCH USER ---------------- */
 
-  const fetchUser = async() => {
-
-    const token = await AsyncStorage.getItem("token");
-
-    const res = await fetch(`${BASE_URL}/auth/me`,{
-      headers:{Authorization:`Bearer ${token}`}
-    });
-
-    const data = await res.json();
-
-    setUser(data);
-  };
-
+ const fetchUser = async () => {
+  try {
+    const res = await API.get("/auth/me");
+    setUser(res.data);
+  } catch (err) {
+    console.log("User fetch error:", err);
+  }
+};
   /* ---------------- FETCH DASHBOARD ---------------- */
 
-  const fetchDashboard = async() => {
+const fetchDashboard = async () => {
+  try {
+    const summaryRes = await API.get("/transactions/summary");
+    setSummary(summaryRes.data);
 
-    const token = await AsyncStorage.getItem("token");
-
-    const summaryRes = await fetch(`${BASE_URL}/transactions/summary`,{
-      headers:{Authorization:`Bearer ${token}`}
-    });
-
-    const summaryData = await summaryRes.json();
-
-    setSummary(summaryData);
-
-    const recentRes = await fetch(`${BASE_URL}/transactions/recent`,{
-      headers:{Authorization:`Bearer ${token}`}
-    });
-
-    const recentData = await recentRes.json();
-
-    setRecentTransactions(recentData);
-
-  };
+    const recentRes = await API.get("/transactions/recent");
+    setRecentTransactions(recentRes.data);
+  } catch (err) {
+    console.log("Dashboard error:", err);
+  }
+};
 
   /* ---------------- FETCH ALL ---------------- */
 
-  const fetchTransactions = async() => {
-
-    const token = await AsyncStorage.getItem("token");
-
-    const res = await fetch(`${BASE_URL}/transactions/all`,{
-      headers:{Authorization:`Bearer ${token}`}
-    });
-
-    const data = await res.json();
-
-    setTransactions(data);
-  };
+const fetchTransactions = async () => {
+  try {
+    const res = await API.get("/transactions");
+    setTransactions(res.data);
+  } catch (err) {
+    console.log("Transactions error:", err);
+  }
+};
 
   useFocusEffect(
     React.useCallback(()=>{

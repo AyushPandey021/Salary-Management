@@ -1,7 +1,10 @@
 import express from "express";
 import {
   addTransaction,
-  getTransactions
+  getRecentTransactions,
+  getSummary,
+  getTransactions,
+  getTransactionsByMonth
 } from "../controllers/transaction.controllers.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
@@ -12,4 +15,9 @@ router.post("/transactions", verifyToken, addTransaction);
 
 router.get("/transactions", verifyToken, getTransactions);
 
-export default router;
+
+router.get("/transactions/summary", verifyToken, getSummary);
+router.get("/transactions/recent", verifyToken, getRecentTransactions);
+router.get("/transactions/month", verifyToken, getTransactionsByMonth);
+
+export default router;  

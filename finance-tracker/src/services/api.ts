@@ -2,7 +2,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API = axios.create({
-  baseURL: "http://192.168.10.47:5000/api",
+  baseURL: "http://192.168.10.33:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -34,7 +34,7 @@ API.interceptors.response.use(
 
       await AsyncStorage.removeItem("token");
 
-      console.log("Token expired → logged out");
+      console.log("Session expired");
 
     }
 
