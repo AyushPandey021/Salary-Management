@@ -56,7 +56,7 @@ export default function AuthScreen() {
       return false;
     }
 
-    if (password.length < 6) {
+    if (password.length < 3) {
       Toast.show({
         type: "error",
         text1: "Password must be at least 6 characters"

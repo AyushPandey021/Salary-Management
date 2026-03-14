@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [transactions,setTransactions] = useState([]);
   const [recentTransactions,setRecentTransactions] = useState([]);
 
-  const BASE_URL = "http://192.168.10.35:5000/api";
+  const BASE_URL = "http://192.168.10.47:5000/api";
 
   /* ---------------- FETCH USER ---------------- */
 
