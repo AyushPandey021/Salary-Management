@@ -1,5 +1,5 @@
 import User from "../models/user.js";
-import bcrypt from "bcryptjs";
+// import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export const signup = async (req, res) => {
@@ -15,7 +15,7 @@ export const signup = async (req, res) => {
     }
 
     // const hashedPassword = await bcrypt.hash(password, 10);/
-
+console.log(req.body);
     const user = await User.create({
       name,
       email,
@@ -50,9 +50,8 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
+    // plain password comparison
+    if (password !== user.password) {
       return res.status(400).json({ message: "Invalid password" });
     }
 
@@ -64,12 +63,17 @@ export const login = async (req, res) => {
 
     res.json({
       token,
-      user
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email
+      }
     });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+
 };
 
 export const getCurrentUser = async (req, res) => {

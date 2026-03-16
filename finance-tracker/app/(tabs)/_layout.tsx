@@ -24,15 +24,7 @@ export default function TabsLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="transactions"
-        options={{
-          title: "Transactions",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="swap-horizontal-outline" size={size} color={color} />
-          ),
-        }}
-      />
+ 
 
       <Tabs.Screen
         name="reports"
@@ -77,9 +69,19 @@ export default function TabsLayout() {
           ),
         }}
       />
+           {/* Hidden screen */}
+      <Tabs.Screen
+        name="transactions"
+        options={{
+          // href: null,
+          tabBarButton: () => null,
+        }}
+      />
     </Tabs>
+    
   );
 }
+
 
 const styles = StyleSheet.create({
   fab: {

@@ -64,11 +64,64 @@ export const getTransactions = async (req, res) => {
 
 
 
+// export const getSummary = async (req, res) => {
+//   try {
+
+//     const transactions = await Transaction.find({
+//       userId: req.user.id
+//     });
+
+//     let income = 0;
+//     let expense = 0;
+//     let investment = 0;
+
+//     transactions.forEach(t => {
+
+//       const amount = Number(t.amount);
+
+//       if (t.type === "Income") {
+//         income += amount;
+//       }
+
+//       if (t.type === "Expense") {
+//         expense += amount;
+//       }
+
+//       if (t.type === "Investment") {
+//         investment += amount;
+//       }
+
+//     });
+
+//     const balance = income - expense - investment;
+
+//     res.json({
+//       income,
+//       expense,
+//       investment,
+//       balance
+//     });
+
+//   } catch (error) {
+
+//     res.status(500).json({
+//       message: error.message
+//     });
+
+//   }
+// };
 export const getSummary = async (req, res) => {
   try {
 
+    const month = parseInt(req.query.month);
+    const year = parseInt(req.query.year);
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
     const transactions = await Transaction.find({
-      userId: req.user.id
+      userId: req.user.id,
+      createdAt: { $gte: startDate, $lt: endDate }
     });
 
     let income = 0;
@@ -79,17 +132,9 @@ export const getSummary = async (req, res) => {
 
       const amount = Number(t.amount);
 
-      if (t.type === "Income") {
-        income += amount;
-      }
-
-      if (t.type === "Expense") {
-        expense += amount;
-      }
-
-      if (t.type === "Investment") {
-        investment += amount;
-      }
+      if (t.type === "Income") income += amount;
+      if (t.type === "Expense") expense += amount;
+      if (t.type === "Investment") investment += amount;
 
     });
 
@@ -104,19 +149,42 @@ export const getSummary = async (req, res) => {
 
   } catch (error) {
 
-    res.status(500).json({
-      message: error.message
-    });
+    res.status(500).json({ message: error.message });
 
   }
 };
 
+// export const getRecentTransactions = async (req, res) => {
+//   try {
 
+//     const transactions = await Transaction.find({
+//       userId: req.user.id
+//     })
+//     .sort({ createdAt: -1 })
+//     .limit(5);
+
+//     res.json(transactions);
+
+//   } catch (error) {
+
+//     res.status(500).json({
+//       message: error.message
+//     });
+
+//   }
+// };
 export const getRecentTransactions = async (req, res) => {
   try {
 
+    const month = parseInt(req.query.month);
+    const year = parseInt(req.query.year);
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
     const transactions = await Transaction.find({
-      userId: req.user.id
+      userId: req.user.id,
+      createdAt: { $gte: startDate, $lt: endDate }
     })
     .sort({ createdAt: -1 })
     .limit(5);
@@ -125,9 +193,7 @@ export const getRecentTransactions = async (req, res) => {
 
   } catch (error) {
 
-    res.status(500).json({
-      message: error.message
-    });
+    res.status(500).json({ message: error.message });
 
   }
 };

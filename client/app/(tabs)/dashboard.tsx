@@ -1,10 +1,4 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-} from "react-native";
+import { View, Text, TouchableOpacity, Modal, FlatList } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -21,13 +15,12 @@ export default function Dashboard() {
   const currentYear = currentDate.getFullYear();
   const [lastTap, setLastTap] = useState(0);
 
-
   function generateMonths(year) {
     return Array.from({ length: 12 }, (_, i) =>
       new Date(year, i).toLocaleString("default", {
         month: "long",
         year: "numeric",
-      })
+      }),
     );
   }
   const [recentTransactions, setRecentTransactions] = useState([]);
@@ -50,16 +43,16 @@ export default function Dashboard() {
 
       const data = await response.json();
       setUser(data);
-
     } catch (error) {
       console.log("User fetch error", error);
     }
   };
 
-
   const [months, setMonths] = useState(generateMonths(currentYear));
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
+  const [selectedMonth, setSelectedMonth] = useState(
+    months[new Date().getMonth()],
+  );
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   useEffect(() => {
     const newMonths = generateMonths(selectedYear);
@@ -76,16 +69,13 @@ export default function Dashboard() {
     // Preserve same month name when year changes
     const currentMonthName = selectedMonth.split(" ")[0];
 
-    const matchedMonth = newMonths.find((m) =>
-      m.startsWith(currentMonthName)
-    );
+    const matchedMonth = newMonths.find((m) => m.startsWith(currentMonthName));
 
     if (matchedMonth) {
       setSelectedMonth(matchedMonth);
     } else {
       setSelectedMonth(newMonths[0]);
     }
-
   }, [selectedYear]);
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
@@ -93,24 +83,22 @@ export default function Dashboard() {
 
   const [transactions, setTransactions] = useState([]);
 
-
   console.log("Transactions:", transactions);
   console.log("Filtered:", filteredTransactions);
-
 
   const balance = income - expense - investment;
   const BASE_URL = "http://192.168.10.48:8000"; // CHANGE IP
   const filteredTransactions = Array.isArray(transactions)
     ? transactions.filter((t) => {
-      const d = new Date(t.created_at);
+        const d = new Date(t.created_at);
 
-      const monthLabel = d.toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
+        const monthLabel = d.toLocaleString("default", {
+          month: "long",
+          year: "numeric",
+        });
 
-      return monthLabel === selectedMonth;
-    })
+        return monthLabel === selectedMonth;
+      })
     : [];
   useEffect(() => {
     let income = 0;
@@ -129,7 +117,6 @@ export default function Dashboard() {
       investment,
       balance: income - expense - investment,
     });
-
   }, [selectedMonth, transactions]);
   const fetchDashboard = async () => {
     try {
@@ -155,7 +142,6 @@ export default function Dashboard() {
 
       const recentData = await recentRes.json();
       setRecentTransactions(recentData);
-
     } catch (e) {
       console.log("Dashboard error:", e);
     }
@@ -171,44 +157,32 @@ export default function Dashboard() {
 
       const data = await res.json();
       setTransactions(data);
-
     } catch (e) {
       console.log("Transaction fetch error:", e);
     }
   };
-
-
-
 
   useFocusEffect(
     React.useCallback(() => {
       fetchDashboard();
       fetchUser();
       fetchTransactions();
-    }, [])
+    }, []),
   );
-
 
   return (
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
-
       {/* Header */}
       <LinearGradient
         colors={
           isDark
-            ? ["#1a253f", "#232947"]   // dark gradient
-            : ["#8E67FF", "#5F6BFF"]   // light gradient
+            ? ["#1a253f", "#232947"] // dark gradient
+            : ["#8E67FF", "#5F6BFF"] // light gradient
         }
         className="pt-4 pb-8 px-2 rounded-b-[35px]"
       >
-
         {/* Top row */}
         <View className="flex-row justify-between items-center">
-
-
-
-
-
           <TouchableOpacity
             onPress={() => setShowMonthDropdown(true)}
             className="flex-row items-center bg-white/20 px-4 py-2 rounded-full"
@@ -221,20 +195,20 @@ export default function Dashboard() {
           {/* Profile */}
           <TouchableOpacity
             onPress={() => router.push("/settings")}
-            className="w-11 h-11 bg-white rounded-full items-center justify-center" style={{ backgroundColor: theme.card }}
+            className="w-11 h-11 bg-white rounded-full items-center justify-center"
+            style={{ backgroundColor: theme.card }}
           >
-            <Text className="font-bold text-indigo-500 text-lg" style={{ color: theme.primary }} >
+            <Text
+              className="font-bold text-indigo-500 text-lg"
+              style={{ color: theme.primary }}
+            >
               {user?.name ? user.name.charAt(0).toUpperCase() : "?"}
             </Text>
           </TouchableOpacity>
-
-
-
         </View>
 
         {/* Balance */}
         <View style={{ alignItems: "center", marginTop: 15 }}>
-
           {/* Label */}
           <Text
             style={{
@@ -258,8 +232,8 @@ export default function Dashboard() {
               letterSpacing: 1,
             }}
           >
-            {/* ₹ {summary.balance.toLocaleString()} */}
-            ₹ {(summary?.balance ?? 0).toLocaleString()}
+            {/* ₹ {summary.balance.toLocaleString()} */}₹{" "}
+            {(summary?.balance ?? 0).toLocaleString()}
           </Text>
 
           {/* Sub Info Row */}
@@ -290,49 +264,46 @@ export default function Dashboard() {
               Updated this month adsfd
             </Text>
           </View>
-
         </View>
-
       </LinearGradient>
-
 
       {/* Body */}
 
       <FlatList
         data={filteredTransactions}
-        keyExtractor={(item, index) => item?._id?.toString() ?? index.toString()}
-
-        style={{ flex: 1 }}   // ⭐ IMPORTANT
+        keyExtractor={(item, index) =>
+          item?._id?.toString() ?? index.toString()
+        }
+        style={{ flex: 1 }} // ⭐ IMPORTANT
         contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
-
-
         ListHeaderComponent={
-
           <>
-            <Text className="text-sm font-semibold mb-1" style={{ color: theme.text }}>
+            <Text
+              className="text-sm font-semibold mb-1"
+              style={{ color: theme.text }}
+            >
               Overview
             </Text>
-
-
 
             {/* Cards */}
             {/* STATS CARDS */}
 
             {/* Row 1 */}
             <View className="flex-row gap-3 px-1 mt-1">
-
               {/* Income */}
-              <View className="flex-1 bg-white rounded-2xl py-1 px-3 shadow-sm" style={{
-                backgroundColor: theme.card,
-                shadowColor: "#000",
-                shadowOpacity: isDark ? 0.3 : 0.1,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 4 },
-                elevation: 4,
-              }}>
+              <View
+                className="flex-1 bg-white rounded-2xl py-1 px-3 shadow-sm"
+                style={{
+                  backgroundColor: theme.card,
+                  shadowColor: "#000",
+                  shadowOpacity: isDark ? 0.3 : 0.1,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 4 },
+                  elevation: 4,
+                }}
+              >
                 <View className="items-center">
-
                   <View
                     className="rounded-2xl mb-2"
                     style={{
@@ -357,24 +328,26 @@ export default function Dashboard() {
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     minimumFontScale={0.6}
-                    className="text-green-600  text-[15px] font-semibold mt-1">
+                    className="text-green-600  text-[15px] font-semibold mt-1"
+                  >
                     ₹ {summary.income ?? 0}
                   </Text>
-
                 </View>
               </View>
 
               {/* Expense */}
-              <View className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm" style={{
-                backgroundColor: theme.card,
-                shadowColor: "#000",
-                shadowOpacity: isDark ? 0.3 : 0.1,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 4 },
-                elevation: 4,
-              }}>
+              <View
+                className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm"
+                style={{
+                  backgroundColor: theme.card,
+                  shadowColor: "#000",
+                  shadowOpacity: isDark ? 0.3 : 0.1,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 4 },
+                  elevation: 4,
+                }}
+              >
                 <View className="items-center">
-
                   <View
                     className="rounded-2xl mb-2"
                     style={{
@@ -395,28 +368,33 @@ export default function Dashboard() {
 
                   <Text className="text-[11px] text-gray-500">Expense</Text>
 
-                  <Text numberOfLines={1}
+                  <Text
+                    numberOfLines={1}
                     adjustsFontSizeToFit
-                    minimumFontScale={0.6} className="text-red-500 text-[15px] font-semibold mt-1">
+                    minimumFontScale={0.6}
+                    className="text-red-500 text-[15px] font-semibold mt-1"
+                  >
                     ₹ {summary.expense ?? 0}
                   </Text>
-
                 </View>
               </View>
 
               {/* Investment */}
-              <View numberOfLines={1}
+              <View
+                numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.6} className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm" style={{
+                minimumFontScale={0.6}
+                className="flex-1 bg-white rounded-2xl py-1 px-2 shadow-sm"
+                style={{
                   backgroundColor: theme.card,
                   shadowColor: "#000",
                   shadowOpacity: isDark ? 0.3 : 0.1,
                   shadowRadius: 8,
                   shadowOffset: { width: 0, height: 4 },
                   elevation: 4,
-                }}>
+                }}
+              >
                 <View className="items-center">
-
                   <View
                     className="rounded-2xl mb-2"
                     style={{
@@ -440,86 +418,76 @@ export default function Dashboard() {
                   <Text className="text-blue-600 text-[15px] font-semibold mt-1">
                     ₹ {summary.investment ?? 0}
                   </Text>
-
                 </View>
-
               </View>
-
             </View>
 
-
-
-
-
             <View className="flex-row justify-between items-center mt-2 mb-2 px-1">
-
-              <Text className="text-sm font-semibold" style={{ color: theme.text }}>
+              <Text
+                className="text-sm font-semibold"
+                style={{ color: theme.text }}
+              >
                 Recent Transactions
               </Text>
 
               <View className="flex-row justify-between items-center mt-3 mb-2 px-1">
-
-
-
                 <TouchableOpacity
-                  onPress={() => router.push("/transactions")} className="flex-row items-center"
+                  onPress={() => router.push("/transactions")}
+                  className="flex-row items-center"
                 >
-                  <Text className="text-indigo-600 font-semibold   mr-1" style={{ color: theme.text, color: "#6366f1" }}>
+                  <Text
+                    className="text-indigo-600 font-semibold   mr-1"
+                    style={{ color: theme.text, color: "#6366f1" }}
+                  >
                     View All
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color="#6366f1" />
                 </TouchableOpacity>
-
               </View>
-
-
-
             </View>
-
-
-
-
-
           </>
         }
-
         renderItem={({ item }) => {
-
           const isIncome = item.type === "Income";
           const isExpense = item.type === "Expense";
           const isInvestment = item.type === "Investment";
 
-          const amountColor =
-            isIncome ? "text-green-500" :
-              isExpense ? "text-red-500" :
-                "text-blue-500";
+          const amountColor = isIncome
+            ? "text-green-500"
+            : isExpense
+              ? "text-red-500"
+              : "text-blue-500";
 
-          const iconName =
-            isIncome ? "arrow-down-circle" :
-              isExpense ? "arrow-up-circle" :
-                "trending-up";
+          const iconName = isIncome
+            ? "arrow-down-circle"
+            : isExpense
+              ? "arrow-up-circle"
+              : "trending-up";
 
-          const iconBg =
-            isIncome ? "bg-green-100" :
-              isExpense ? "bg-red-100" :
-                "bg-blue-100";
+          const iconBg = isIncome
+            ? "bg-green-100"
+            : isExpense
+              ? "bg-red-100"
+              : "bg-blue-100";
 
-          const iconColor =
-            isIncome ? "#16a34a" :
-              isExpense ? "#ef4444" :
-                "#2563eb";
+          const iconColor = isIncome
+            ? "#16a34a"
+            : isExpense
+              ? "#ef4444"
+              : "#2563eb";
 
-          const tagColor =
-            isIncome ? "bg-green-50 text-green-600" :
-              isExpense ? "bg-red-50 text-red-600" :
-                "bg-blue-50 text-blue-600";
+          const tagColor = isIncome
+            ? "bg-green-50 text-green-600"
+            : isExpense
+              ? "bg-red-50 text-red-600"
+              : "bg-blue-50 text-blue-600";
 
           const formattedDate = item.created_at
             ? new Date(item.created_at).toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
             : "";
 
           return (
@@ -535,46 +503,51 @@ export default function Dashboard() {
                 setLastTap(now);
               }}
               className="rounded-2xl px-2 py-2 mb-2"
-              style={{ backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }}
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.border,
+                borderWidth: 1,
+              }}
             >
-
-
               <View className="flex-row items-center justify-between">
-
                 {/* LEFT ICON */}
-                <View className={`w-9 h-9 rounded-full items-center justify-center mr-2 ${iconBg}`}>
+                <View
+                  className={`w-9 h-9 rounded-full items-center justify-center mr-2 ${iconBg}`}
+                >
                   <Ionicons name={iconName} size={20} color={iconColor} />
                 </View>
 
                 {/* CENTER CONTENT */}
                 <View className="flex-1">
-
                   {/* TITLE */}
                   <Text
                     numberOfLines={1}
-                    className="font-semibold text-gray-800 text-[12px]" style={{ color: theme.text }}
+                    className="font-semibold text-gray-800 text-[12px]"
+                    style={{ color: theme.text }}
                   >
                     {item.title}
                   </Text>
 
                   {/* TAG + DATE (same line) */}
-                  <View className="flex-row items-center mt-1 flex-wrap" >
-
+                  <View className="flex-row items-center mt-1 flex-wrap">
                     {item.tag && (
-                      <View className={`px-2 py-[2px] rounded-full mr-2 ${tagColor}`}>
-                        <Text className="text-[10px] font-semibold" >
+                      <View
+                        className={`px-2 py-[2px] rounded-full mr-2 ${tagColor}`}
+                      >
+                        <Text className="text-[10px] font-semibold">
                           {item.tag}
                         </Text>
                       </View>
                     )}
 
                     {formattedDate !== "" && (
-                      <Text className="text-[11px] " style={{ color: theme.subText }}
+                      <Text
+                        className="text-[11px] "
+                        style={{ color: theme.subText }}
                       >
                         {formattedDate}
                       </Text>
                     )}
-
                   </View>
                 </View>
 
@@ -587,29 +560,22 @@ export default function Dashboard() {
                 >
                   ₹ {item.amount}
                 </Text>
-
               </View>
             </TouchableOpacity>
           );
         }}
-
-
       />
 
       {/* Month & Year Selector */}
       <Modal visible={showMonthDropdown} transparent animationType="slide">
-
         <View className="flex-1 justify-end bg-black/30">
-
           {/* Bottom Sheet */}
           <View className="bg-white rounded-t-3xl pt-3 pb-6 px-5 max-h-[70%]">
-
             {/* drag handle */}
             <View className="w-12 h-1.5 bg-gray-300 rounded-full self-center mb-3" />
 
             {/* HEADER */}
             <View className="flex-row items-center justify-between mb-4">
-
               {/* close */}
               <TouchableOpacity onPress={() => setShowMonthDropdown(false)}>
                 <Ionicons name="close" size={22} color="#555" />
@@ -617,7 +583,6 @@ export default function Dashboard() {
 
               {/* year */}
               <View className="flex-row items-center">
-
                 <TouchableOpacity
                   onPress={() => setSelectedYear(selectedYear - 1)}
                   className="p-2"
@@ -635,12 +600,10 @@ export default function Dashboard() {
                 >
                   <Ionicons name="chevron-forward" size={20} color="#555" />
                 </TouchableOpacity>
-
               </View>
 
               {/* spacer for balance */}
               <View className="w-6" />
-
             </View>
 
             {/* MONTH LIST */}
@@ -649,7 +612,6 @@ export default function Dashboard() {
               showsVerticalScrollIndicator={false}
               keyExtractor={(item) => item}
               renderItem={({ item }) => {
-
                 const isSelected = item === selectedMonth;
 
                 return (
@@ -658,16 +620,14 @@ export default function Dashboard() {
                       setSelectedMonth(item);
                       setShowMonthDropdown(false);
                     }}
-                    className={`py-3 px-4 mb-2 rounded-xl ${isSelected
-                      ? "bg-indigo-500"
-                      : "bg-gray-50"
-                      }`}
+                    className={`py-3 px-4 mb-2 rounded-xl ${
+                      isSelected ? "bg-indigo-500" : "bg-gray-50"
+                    }`}
                   >
                     <Text
-                      className={`text-center font-medium ${isSelected
-                        ? "text-white"
-                        : "text-gray-700"
-                        }`}
+                      className={`text-center font-medium ${
+                        isSelected ? "text-white" : "text-gray-700"
+                      }`}
                     >
                       {item}
                     </Text>
@@ -675,12 +635,9 @@ export default function Dashboard() {
                 );
               }}
             />
-
           </View>
         </View>
       </Modal>
-
-
     </View>
   );
 }
