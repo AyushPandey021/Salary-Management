@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export const verifyToken = (req, res, next) => {
+export  const verifyToken = (req, res, next) => {
 
   try {
 

@@ -10,6 +10,8 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { Alert } from "react-native";
+
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../src/context/ThemeContext";
@@ -33,10 +35,6 @@ export default function Dashboard() {
 
   const [transactions, setTransactions] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
-
-  // const BASE_URL = "http://192.168.10.47:5000/api";
-
-  /* ---------------- FETCH USER ---------------- */
 
   const fetchUser = async () => {
     try {
@@ -136,110 +134,123 @@ export default function Dashboard() {
   };
 
   const monthOptions = generateMonthOptions();
+
+  const formatAmount = (num: number) => {
+    if (num >= 10000000) return (num / 10000000).toFixed(1) + "Cr";
+    if (num >= 100000) return (num / 100000).toFixed(1) + "L";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+    return num;
+  };
+
+  const getIcon = (type: string) => {
+    if (type === "Income") return "arrow-down-circle";
+    if (type === "Expense") return "arrow-up-circle";
+    return "trending-up";
+  };
+
+  const getColor = (type: string) => {
+    if (type === "Income") return "#16a34a";
+    if (type === "Expense") return "#ef4444";
+    return "#2563eb";
+  };
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       {/* HEADER */}
-   <Modal visible={monthModal} transparent animationType="slide">
-  <View
-    style={{
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.35)",
-      justifyContent: "center",
-    }}
-  >
-    <View
-      style={{
-        backgroundColor: theme.card,
-        margin: 20,
-        borderRadius: 20,
-        maxHeight: "70%",
-        overflow: "hidden",
-      }}
-    >
-
-      {/* HEADER */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          paddingHorizontal: 18,
-          paddingVertical: 14,
-          borderBottomWidth: 1,
-          borderColor: theme.border,
-        }}
-      >
-        <Text
+      <Modal visible={monthModal} transparent animationType="slide">
+        <View
           style={{
-            fontSize: 16,
-            fontWeight: "700",
-            color: theme.text,
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.35)",
+            justifyContent: "center",
           }}
         >
-          Select Month
-        </Text>
-
-        <TouchableOpacity onPress={() => setMonthModal(false)}>
-          <Ionicons
-            name="close"
-            size={22}
-            color={theme.text}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* MONTH LIST */}
-      <FlatList
-        data={monthOptions}
-        keyExtractor={(item, index) => index.toString()}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          const isSelected =
-            item.month === selectedMonth &&
-            item.year === selectedYear;
-
-          return (
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedMonth(item.month);
-                setSelectedYear(item.year);
-                setMonthModal(false);
-              }}
+          <View
+            style={{
+              backgroundColor: theme.card,
+              margin: 20,
+              borderRadius: 20,
+              maxHeight: "70%",
+              overflow: "hidden",
+            }}
+          >
+            {/* HEADER */}
+            <View
               style={{
-                paddingVertical: 16,
-                paddingHorizontal: 22,
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                backgroundColor: isSelected
-                  ? theme.primary + "15"
-                  : "transparent",
+                paddingHorizontal: 18,
+                paddingVertical: 14,
+                borderBottomWidth: 1,
+                borderColor: theme.border,
               }}
             >
               <Text
                 style={{
-                  color: isSelected ? theme.primary : theme.text,
-                  fontWeight: isSelected ? "700" : "500",
-                  fontSize: 15,
+                  fontSize: 16,
+                  fontWeight: "700",
+                  color: theme.text,
                 }}
               >
-                {item.label}
+                Select Month
               </Text>
 
-              {isSelected && (
-                <Ionicons
-                  name="checkmark-circle"
-                  size={18}
-                  color={theme.primary}
-                />
-              )}
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
-  </View>
-</Modal>
+              <TouchableOpacity onPress={() => setMonthModal(false)}>
+                <Ionicons name="close" size={22} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* MONTH LIST */}
+            <FlatList
+              data={monthOptions}
+              keyExtractor={(item, index) => index.toString()}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const isSelected =
+                  item.month === selectedMonth && item.year === selectedYear;
+
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedMonth(item.month);
+                      setSelectedYear(item.year);
+                      setMonthModal(false);
+                    }}
+                    style={{
+                      paddingVertical: 16,
+                      paddingHorizontal: 22,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      backgroundColor: isSelected
+                        ? theme.primary + "15"
+                        : "transparent",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: isSelected ? theme.primary : theme.text,
+                        fontWeight: isSelected ? "700" : "500",
+                        fontSize: 15,
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+
+                    {isSelected && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={18}
+                        color={theme.primary}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
       <LinearGradient
         colors={isDark ? ["#1f2a44", "#1a1f33"] : ["#8E67FF", "#5F6BFF"]}
@@ -282,56 +293,54 @@ export default function Dashboard() {
         </View>
         {/* MONTH SELECTOR */}
 
-      <TouchableOpacity
-  onPress={() => setMonthModal(true)}
-  activeOpacity={0.8}
-  style={{
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 25,
-    marginTop: 12,
+        <TouchableOpacity
+          onPress={() => setMonthModal(true)}
+          activeOpacity={0.8}
+          style={{
+            alignSelf: "center",
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 25,
+            marginTop: 12,
 
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
+            backgroundColor: "rgba(255,255,255,0.18)",
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.25)",
 
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4
-  }}
->
+            shadowColor: "#000",
+            shadowOpacity: 0.2,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 4,
+          }}
+        >
+          <Ionicons
+            name="calendar-outline"
+            size={16}
+            color="#fff"
+            style={{ marginRight: 6 }}
+          />
 
-  <Ionicons
-    name="calendar-outline"
-    size={16}
-    color="#fff"
-    style={{ marginRight: 6 }}
-  />
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: 14,
+              letterSpacing: 0.3,
+            }}
+          >
+            {months[selectedMonth]} {selectedYear}
+          </Text>
 
-  <Text
-    style={{
-      color: "#fff",
-      fontWeight: "700",
-      fontSize: 14,
-      letterSpacing: 0.3
-    }}
-  >
-    {months[selectedMonth]} {selectedYear}
-  </Text>
-
-  <Ionicons
-    name="chevron-down"
-    size={18}
-    color="#fff"
-    style={{ marginLeft: 6 }}
-  />
-
-</TouchableOpacity>
+          <Ionicons
+            name="chevron-down"
+            size={18}
+            color="#fff"
+            style={{ marginLeft: 6 }}
+          />
+        </TouchableOpacity>
 
         {/* BALANCE */}
 
@@ -358,7 +367,7 @@ export default function Dashboard() {
           style={{
             flexDirection: "row",
             justifyContent: "space-around",
-            marginTop: 25,
+            marginTop: 10,
           }}
         ></View>
       </LinearGradient>
@@ -367,15 +376,15 @@ export default function Dashboard() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 6, paddingBottom: 80 }}
       >
         {/* SUMMARY CARDS */}
 
         <View
           style={{
             flexDirection: "row",
-            justifyContent: "space-between",
-            marginBottom: 20,
+            justifyContent: "space-around",
+            marginBottom: 12,
           }}
         >
           {[
@@ -384,44 +393,86 @@ export default function Dashboard() {
               value: summary.income,
               color: "#16a34a",
               icon: "arrow-down",
+              gradient: ["#22c55e", "#15803d"],
             },
             {
               label: "Expense",
               value: summary.expense,
               color: "#ef4444",
               icon: "arrow-up",
+              gradient: ["#ef4444", "#b91c1c"],
             },
             {
               label: "Invest",
               value: summary.investment,
               color: "#2563eb",
               icon: "trending-up",
+              gradient: ["#3b82f6", "#1d4ed8"],
             },
           ].map((card) => (
-            <View
+            <TouchableOpacity
               key={card.label}
+              activeOpacity={0.85}
               style={{
                 flex: 1,
-                backgroundColor: theme.card,
-                padding: 14,
-                borderRadius: 18,
-                marginHorizontal: 4,
-                alignItems: "center",
+                marginHorizontal: 6,
               }}
             >
-              <Ionicons name={card.icon} size={20} color={card.color} />
+              <LinearGradient
+                colors={card.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  borderRadius: 20,
+                  paddingVertical: 18,
+                  paddingHorizontal: 12,
+                  alignItems: "center",
 
-              <Text style={{ color: theme.subText, fontSize: 11 }}>
-                {card.label}
-              </Text>
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 10,
+                  elevation: 10,
+                }}
+              >
+                {/* Icon bubble */}
+                <View
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.25)",
+                    padding: 10,
+                    borderRadius: 50,
+                    marginBottom: 6,
+                  }}
+                >
+                  <Ionicons name={card.icon} size={20} color="#fff" />
+                </View>
 
-              <Text style={{ color: card.color, fontWeight: "bold" }}>
-                ₹ {card.value}
-              </Text>
-            </View>
+                {/* Label */}
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.85)",
+                    fontSize: 12,
+                    marginTop: 4,
+                  }}
+                >
+                  {card.label}
+                </Text>
+
+                {/* Value */}
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "bold",
+                    fontSize: 18,
+                    marginTop: 2,
+                  }}
+                >
+                  ₹ {formatAmount(card.value)}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
           ))}
         </View>
-
         {/* CATEGORY INSIGHTS */}
 
         <Text
@@ -462,54 +513,149 @@ export default function Dashboard() {
             style={{
               color: theme.text,
               fontWeight: "600",
+              fontSize: 16,
             }}
           >
             Recent Transactions
           </Text>
 
           <TouchableOpacity onPress={() => router.push("/transactions")}>
-            <Text style={{ color: "#6366f1" }}>View All</Text>
+            <Text style={{ color: "#6366f1", fontWeight: "600" }}>
+              View All
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {recentTransactions.map((item) => (
-          <View
-            key={item._id}
-            style={{
-              backgroundColor: theme.card,
-              padding: 14,
-              borderRadius: 16,
-              marginTop: 10,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <View>
-              <Text style={{ color: theme.text, fontWeight: "600" }}>
-                {item.title}
-              </Text>
+        {recentTransactions.map((item) => {
+          const color = getColor(item.type);
 
-              <Text style={{ color: theme.subText, fontSize: 12 }}>
-                {item.category}
-              </Text>
-            </View>
-
-            <Text
+          return (
+            <TouchableOpacity
+              key={item._id}
+              activeOpacity={0.85}
+              onLongPress={() =>
+                Alert.alert("Transaction", "Choose action", [
+                  {
+                    text: "Edit",
+                    onPress: () => router.push(`/edit/${item._id}`),
+                  },
+                  {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => deleteTransaction(item._id),
+                  },
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                ])
+              }
               style={{
-                fontWeight: "bold",
-                color:
-                  item.type === "Income"
-                    ? "#16a34a"
-                    : item.type === "Expense"
-                      ? "#ef4444"
-                      : "#2563eb",
+                backgroundColor: theme.card,
+                padding: 16,
+                borderRadius: 18,
+                marginTop: 12,
+
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+
+                shadowColor: "#000",
+                shadowOpacity: 0.08,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 3,
               }}
             >
-              ₹ {item.amount}
-            </Text>
-          </View>
-        ))}
+              {/* LEFT SECTION */}
+
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                {/* ICON */}
+                <View
+                  style={{
+                    backgroundColor: color + "20",
+                    padding: 10,
+                    borderRadius: 12,
+                    marginRight: 12,
+                  }}
+                >
+                  <Ionicons name={getIcon(item.type)} size={20} color={color} />
+                </View>
+
+                {/* TEXT */}
+
+                <View>
+                  <Text
+                    style={{
+                      color: theme.text,
+                      fontWeight: "600",
+                      fontSize: 14,
+                    }}
+                  >
+                    {item.title}
+                  </Text>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginTop: 4,
+                    }}
+                  >
+                    {/* CATEGORY TAG */}
+                    <View
+                      style={{
+                        backgroundColor: theme.primary + "20",
+                        paddingHorizontal: 10,
+                        paddingVertical: 3,
+                        borderRadius: 12,
+                        marginRight: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: theme.primary,
+                          fontSize: 11,
+                          fontWeight: "600",
+                        }}
+                      >
+                        {item.category}
+                      </Text>
+                    </View>
+
+                    {/* DATE */}
+                    <Text
+                      style={{
+                        color: theme.subText,
+                        fontSize: 12,
+                      }}
+                    >
+                      {new Date(item.date).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* AMOUNT */}
+
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{
+                  fontWeight: "700",
+                  fontSize: 15,
+                  color: color,
+                }}
+              >
+                ₹ {Number(item.amount).toLocaleString()}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );

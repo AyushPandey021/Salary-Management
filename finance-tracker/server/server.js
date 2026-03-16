@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import transactionRoutes from "./src/routes/transaction.route.js";
+import categoryRoutes from "./src/routes/category.routes.js"
 dotenv.config();
 
 const app = express();
@@ -15,8 +16,9 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api", transactionRoutes);
+app.use("/api/categories", categoryRoutes)
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(5000, "0.0.0.0", () => {
+  console.log("Server running on port 5000");
 });

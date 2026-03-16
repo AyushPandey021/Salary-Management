@@ -24,8 +24,6 @@ export default function TabsLayout() {
         }}
       />
 
- 
-
       <Tabs.Screen
         name="reports"
         options={{
@@ -69,19 +67,17 @@ export default function TabsLayout() {
           ),
         }}
       />
-           {/* Hidden screen */}
+
+      {/* Hidden Screen (No tab space reserved) */}
       <Tabs.Screen
         name="transactions"
         options={{
-          // href: null,
-          tabBarButton: () => null,
+          href: null
         }}
       />
     </Tabs>
-    
   );
 }
-
 
 const styles = StyleSheet.create({
   fab: {

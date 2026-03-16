@@ -94,16 +94,30 @@ const handleSubmit = async () => {
         password
       });
 
+      console.log("LOGIN RESPONSE:", res.data);   // 👈 ADD THIS
+
       Toast.show({
         type: "success",
         text1: "Login successful ✅"
       });
     }
 
-    const token = res.data.token || res.data.access_token;
+    const token =
+      res.data.token ||
+      res.data.access_token ||
+      res.data.jwt ||
+      res.data.data?.token;
 
     if (token) {
+
+      console.log("TOKEN SAVED:", token);
+
       await AsyncStorage.setItem("token", token);
+
+    } else {
+
+      console.log("NO TOKEN FOUND IN RESPONSE");
+
     }
 
     setTimeout(() => {
@@ -125,7 +139,6 @@ const handleSubmit = async () => {
     });
   }
 };
-
   return (
     <View style={styles.container}>
 
