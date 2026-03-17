@@ -9,21 +9,28 @@ Modal,
 FlatList
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
 import API from "../../src/services/api";
-
+import { useFocusEffect } from "expo-router";
 type TabType = "Income" | "Expense" | "Investment";
 
 export default function AddTransaction() {
 
 const [activeTab,setActiveTab] = useState<TabType>("Expense")
-const { transaction } = useLocalSearchParams();
+const params = useLocalSearchParams();
 
-const editData = transaction ? JSON.parse(transaction as string) : null;
+const transaction =
+  params.transaction && params.transaction !== "null"
+    ? params.transaction
+    : null;
+
+const mode = params.mode || "create";
+
+// const editData = transaction ? JSON.parse(transaction as string) : null;
 const [title,setTitle] = useState("")
 const [amount,setAmount] = useState("")
 const [category,setCategory] = useState("")
@@ -199,20 +206,38 @@ return false
 
 return true
 }
-useEffect(()=>{
 
-if(editData){
 
-setTitle(editData.title);
-setAmount(String(editData.amount));
-setCategory(editData.category);
-setDescription(editData.description);
-setPaymentMode(editData.paymentMode);
-setActiveTab(editData.type);
+useFocusEffect(
+  React.useCallback(() => {
+    // ✅ HARD RESET FIRST
+    setTitle("");
+    setAmount("");
+    setCategory("");
+    setDescription("");
+    setPaymentMode("Cash");
+    setActiveTab("Expense");
 
-}
+    // small delay ensures state flush (important)
+    setTimeout(() => {
+      if (transaction && mode !== "create") {
+        try {
+          const parsed = JSON.parse(transaction as string);
 
-},[]);
+          setTitle(parsed.title || "");
+          setAmount(String(parsed.amount || ""));
+          setCategory(parsed.category || "");
+          setDescription(parsed.description || "");
+          setPaymentMode(parsed.paymentMode || "Cash");
+          setActiveTab(parsed.type || "Expense");
+        } catch (e) {
+          console.log("Parse error", e);
+        }
+      }
+    }, 0);
+
+  }, [transaction, mode])
+);
 
 /* SAVE TRANSACTION */
 
@@ -236,17 +261,12 @@ description,
 date: new Date()
 };
 
-if(editData){
+if (transaction && mode !== "create") {
+  const parsed = JSON.parse(transaction as string);
 
-await API.put(`/transactions/${editData._id}`, payload,{
-headers:{Authorization:`Bearer ${token}`}
-});
-
-Toast.show({
-type:"success",
-text1:"Transaction updated"
-});
-
+  await API.put(`/transactions/${parsed._id}`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }else{
 
 await API.post("/transactions", payload,{
@@ -391,7 +411,11 @@ disabled={saving}
 >
 
 <Text style={{color:"white",fontWeight:"bold"}}>
-{saving ? "Saving..." : editData ? "Update Transaction" : "Save Transaction"}
+{saving
+  ? "Saving..."
+  : transaction && mode !== "create"
+  ? "Update Transaction"
+  : "Save Transaction"}
 </Text>
 
 </TouchableOpacity>
