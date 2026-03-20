@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "scheme": "financetracker",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
 
     "android": {
       "package": "com.ayushbabu.financetracker"
