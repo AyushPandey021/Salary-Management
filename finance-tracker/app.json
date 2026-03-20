@@ -11,7 +11,7 @@
     "android": {
       "package": "com.ayushbabu.financetracker",
       "adaptiveIcon": {
-    "foregroundImage": "./assets/",
+    "foregroundImage": "../assets/images/t.jpg",
     "backgroundColor": "#ffffff"
   }
     },

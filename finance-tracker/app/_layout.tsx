@@ -1,39 +1,36 @@
-import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from "@react-navigation/native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 
 import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
-
+import { toastConfig } from "./toast/toastconfig";
 function AppNavigation() {
   const { isDark } = useTheme();
 
   return (
     <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-      
       <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="login" />
+        <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal" }}
-        />
+        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>
 
-      <Toast />
+      <Toast config={toastConfig} />
 
       <StatusBar style={isDark ? "light" : "dark"} />
-
     </NavigationThemeProvider>
   );
 }
 
 export default function RootLayout() {
-
   return (
     <ThemeProvider>
       <AppNavigation />
     </ThemeProvider>
   );
-
 }

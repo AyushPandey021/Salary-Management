@@ -99,3 +99,8 @@ Testing user:
 ak 
 ak@gmail.com
 11
+
+
+deployment  command 
+$env:EXPO_TOKEN="eas_xxxxxxxxxxxxxxxxxxxxxx"; npx eas build --platform android --profile preview
+
