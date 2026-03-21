@@ -1,5 +1,3 @@
-
- 
 import {
   View,
   Text,
@@ -10,7 +8,11 @@ import {
   Platform,
   ActionSheetIOS,
 } from "react-native";
-
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
 import React, { useState, useCallback } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,7 +20,200 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "../../src/context/ThemeContext";
 import API from "../../src/services/api";
+const TransactionItem = ({ item, theme, router, openMenu }: any) => {
+  const color =
+    item.type === "Income"
+      ? "#22c55e"
+      : item.type === "Expense"
+      ? "#ef4444"
+      : "#3b82f6";
 
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  // 📅 Date helpers
+  const dateObj = new Date(item.date);
+  const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+  const fullDate = dateObj.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+  });
+
+  // const halfMonth = dateObj.getDate() <= 15 ? "1–15" : "16–End";
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPressIn={() => (scale.value = withSpring(0.97))}
+        onPressOut={() => (scale.value = withSpring(1))}
+        onPress={() =>
+          router.push({
+            pathname: "/add",
+            params: {
+              transaction: JSON.stringify(item),
+              mode: "edit",
+            },
+          })
+        }
+        onLongPress={() => openMenu(item)}
+        style={{
+          marginBottom: 10,
+          borderRadius: 18,
+          overflow: "hidden",
+          shadowColor: color,
+          shadowOpacity: 0.18,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 6,
+        }}
+      >
+        <LinearGradient
+          colors={[theme.card, theme.card + "F5"]}
+          style={{
+            padding: 12,
+            borderRadius: 18,
+          }}
+        >
+          {/* 🔹 TOP ROW */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            {/* LEFT */}
+            <View style={{ flex: 1 }}>
+              {/* DATE TAG */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 4,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: theme.primary + "15",
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 10,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={10}
+                    color={theme.primary}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: theme.primary,
+                    }}
+                  >
+                    {dayName}, {fullDate}
+                  </Text>
+                </View>
+
+                {/* HALF MONTH */}
+               
+              </View>
+
+              {/* TITLE */}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+  <Text
+    numberOfLines={1}
+    style={{
+      color: theme.text,
+      fontWeight: "700",
+      fontSize: 13,
+      flexShrink: 1,
+    }}
+  >
+    {item.title}
+  </Text>
+
+  {item.description ? (
+    <Text
+      numberOfLines={1}
+      style={{
+        marginLeft: 6, // 👉 GAP
+        fontSize: 11,
+        color: theme.subText,
+        flexShrink: 1,
+      }}
+    >
+      • {item.description}
+    </Text>
+  ) : null}
+</View>
+
+              {/* CATEGORY + TYPE */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginTop: 3,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: color + "20",
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 8,
+                    marginRight: 6,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 9,
+                      fontWeight: "600",
+                      color: color,
+                    }}
+                  >
+                    {item.category}
+                  </Text>
+                </View>
+
+                <Text
+                  style={{
+                    fontSize: 9,
+                    color: theme.subText,
+                  }}
+                >
+                  {item.type}
+                </Text>
+              </View>
+            </View>
+
+            {/* AMOUNT */}
+            <Text
+              style={{
+                color: color,
+                fontWeight: "800",
+                fontSize: 15,
+              }}
+            >
+              ₹ {Number(item.amount).toLocaleString()}
+            </Text>
+          </View>
+
+          {/* 🔹 DESCRIPTION */}
+
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 export default function Transactions() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
@@ -51,7 +246,7 @@ export default function Transactions() {
   useFocusEffect(
     useCallback(() => {
       fetchTransactions();
-    }, [])
+    }, []),
   );
 
   /* ================= FILTER ================= */
@@ -107,7 +302,7 @@ export default function Transactions() {
         (i) => {
           if (i === 1) handleEdit(item);
           if (i === 2) handleDelete(item);
-        }
+        },
       );
     } else {
       setShowActions(true);
@@ -121,12 +316,12 @@ export default function Transactions() {
     setShowActions(false);
 
     router.push({
-  pathname: "/add",
-  params: {
-    transaction: JSON.stringify(data),
-    mode: "edit",
-  },
-});
+      pathname: "/add",
+      params: {
+        transaction: JSON.stringify(data),
+        mode: "edit",
+      },
+    });
   };
 
   const handleDelete = (item?: any) => {
@@ -154,9 +349,7 @@ export default function Transactions() {
       {/* HEADER */}
       <LinearGradient
         colors={isDark ? ["#1f2a44", "#1a1f33"] : ["#8E67FF", "#5F6BFF"]}
-       style={{
-
-
+        style={{
           paddingTop: 40,
           paddingBottom: 25,
           paddingHorizontal: 20,
@@ -255,74 +448,14 @@ export default function Transactions() {
         data={filtered}
         keyExtractor={(item: any) => item._id}
         contentContainerStyle={{ padding: 12 }}
-        renderItem={({ item }) => {
-          const color =
-            item.type === "Income"
-              ? "#16a34a"
-              : item.type === "Expense"
-              ? "#ef4444"
-              : "#2563eb";
-
-          return (
-      <TouchableOpacity
-  activeOpacity={0.85}
-  onPress={() =>
-    router.push({
-      pathname: "/add",
-      params: {
-        transaction: JSON.stringify(item),
-        mode: "edit",
-      },
-    })
-  }
-  onLongPress={() => openMenu(item)}
-  style={{
-    backgroundColor: theme.card,
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  }}
->
-              <View style={{ flexDirection: "row", flex: 1 }}>
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: color + "20",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Ionicons name="wallet" size={16} color={color} />
-                </View>
-
-                <View style={{ marginLeft: 10, flex: 1 }}>
-                  <Text
-                    style={{ color: theme.text, fontWeight: "600" }}
-                    numberOfLines={1}
-                  >
-                    {item.title}
-                  </Text>
-
-                  <Text
-                    style={{ color: theme.subText, fontSize: 11 }}
-                    numberOfLines={1}
-                  >
-                    {item.category} •{" "}
-                    {new Date(item.date).toLocaleDateString()}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={{ color, fontWeight: "700" }}>
-                ₹ {Number(item.amount).toLocaleString()}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
+     renderItem={({ item }) => (
+  <TransactionItem
+    item={item}
+    theme={theme}
+    router={router}
+    openMenu={openMenu}
+  />
+)}  
       />
 
       {/* ANDROID ACTION MODAL */}
@@ -351,9 +484,7 @@ export default function Transactions() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setShowActions(false)}>
-              <Text style={{ padding: 12, textAlign: "center" }}>
-                Cancel
-              </Text>
+              <Text style={{ padding: 12, textAlign: "center" }}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
