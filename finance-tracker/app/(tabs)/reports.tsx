@@ -29,10 +29,13 @@ export default function Reports() {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [activeType, setActiveType] =
-    useState<"All" | "Income" | "Expense" | "Investment">("All");
+  const [activeType, setActiveType] = useState<
+    "All" | "Income" | "Expense" | "Investment"
+  >("All");
   const [chartType, setChartType] = useState<"pie" | "line" | "bar">("pie");
-  const [period, setPeriod] = useState<"All" | "Month" | "Week" | "15days" | "Day">("Month");
+  const [period, setPeriod] = useState<
+    "All" | "Month" | "Week" | "15days" | "Day"
+  >("Month");
   const [showPeriodMenu, setShowPeriodMenu] = useState(false);
 
   // ---------- MONTH GENERATOR ----------
@@ -57,11 +60,31 @@ export default function Reports() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   // ---------- FETCH TRANSACTIONS ----------
+  // const fetchTransactions = async () => {
+  //   try {
+  //     const res = await API.get("/transactions/month", {
+  //       params: { month: selectedMonth },
+  //     });
+  //     setTransactions(res.data);
+  //   } catch (err) {
+  //     console.log("Report fetch error:", err);
+  //   }
+  // };
   const fetchTransactions = async () => {
     try {
-      const res = await API.get("/transactions/month", {
-        params: { month: selectedMonth },
+      const [monthName, year] = selectedMonth.split(" ");
+
+      const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth() + 1;
+
+      const res = await API.get("/transactions", {
+        params: {
+          month: monthIndex,
+          year: Number(year),
+        },
       });
+
+      // console.log("REPORT DATA:", res.data); // 👈 DEBUG
+
       setTransactions(res.data);
     } catch (err) {
       console.log("Report fetch error:", err);
@@ -73,66 +96,55 @@ export default function Reports() {
   }, [selectedMonth]);
 
   // ---------- PERIOD FILTER ----------
-const filterByPeriod = (data: Transaction[]) => {
+  const filterByPeriod = (data: Transaction[]) => {
+    const now = new Date();
 
-  const now = new Date();
+    if (period === "All") {
+      return data;
+    }
 
-  if (period === "All") {
+    if (period === "Day") {
+      return data.filter((t) => {
+        const d = new Date(t.createdAt);
+        return d.toDateString() === now.toDateString();
+      });
+    }
+
+    if (period === "Week") {
+      const weekAgo = new Date();
+      weekAgo.setDate(now.getDate() - 7);
+
+      return data.filter((t) => {
+        const d = new Date(t.createdAt);
+        return d >= weekAgo;
+      });
+    }
+
+    if (period === "15days") {
+      const daysAgo = new Date();
+      daysAgo.setDate(now.getDate() - 15);
+
+      return data.filter((t) => {
+        const d = new Date(t.createdAt);
+        return d >= daysAgo;
+      });
+    }
+
+    if (period === "Month") {
+      const [monthName, year] = selectedMonth.split(" ");
+
+      return data.filter((t) => {
+        const d = new Date(t.createdAt);
+
+        return (
+          d.toLocaleString("default", { month: "short" }) === monthName &&
+          d.getFullYear().toString() === year
+        );
+      });
+    }
+
     return data;
-  }
-
-  if (period === "Day") {
-
-    return data.filter(t => {
-      const d = new Date(t.createdAt);
-      return d.toDateString() === now.toDateString();
-    });
-
-  }
-
-  if (period === "Week") {
-
-    const weekAgo = new Date();
-    weekAgo.setDate(now.getDate() - 7);
-
-    return data.filter(t => {
-      const d = new Date(t.createdAt);
-      return d >= weekAgo;
-    });
-
-  }
-
-  if (period === "15days") {
-
-    const daysAgo = new Date();
-    daysAgo.setDate(now.getDate() - 15);
-
-    return data.filter(t => {
-      const d = new Date(t.createdAt);
-      return d >= daysAgo;
-    });
-
-  }
-
-  if (period === "Month") {
-
-    const [monthName, year] = selectedMonth.split(" ");
-
-    return data.filter(t => {
-
-      const d = new Date(t.createdAt);
-
-      return (
-        d.toLocaleString("default",{month:"short"}) === monthName &&
-        d.getFullYear().toString() === year
-      );
-
-    });
-
-  }
-
-  return data;
-};
+  };
 
   // ---------- CHART PREPARATION ----------
   useEffect(() => {
@@ -150,8 +162,14 @@ const filterByPeriod = (data: Transaction[]) => {
     });
 
     const colors = [
-      "#7C5CFC", "#22c55e", "#ef4444", "#f59e0b",
-      "#06b6d4", "#a855f7", "#3b82f6", "#f97316"
+      "#7C5CFC",
+      "#22c55e",
+      "#ef4444",
+      "#f59e0b",
+      "#06b6d4",
+      "#a855f7",
+      "#3b82f6",
+      "#f97316",
     ];
 
     const formatted = Object.keys(grouped).map((key, index) => {
@@ -168,7 +186,7 @@ const filterByPeriod = (data: Transaction[]) => {
     });
 
     setChartData(formatted);
-  }, [transactions, activeType, period,selectedMonth]);
+  }, [transactions, activeType, period, selectedMonth]);
 
   // ---------- UI ----------
   return (
@@ -220,9 +238,7 @@ const filterByPeriod = (data: Transaction[]) => {
               style={[
                 styles.typeButton,
                 {
-                  backgroundColor: active
-                    ? theme.primary
-                    : theme.card,
+                  backgroundColor: active ? theme.primary : theme.card,
                   shadowColor: active ? theme.primary : "#000",
                   shadowOpacity: 0.2,
                   shadowRadius: 5,
@@ -244,15 +260,17 @@ const filterByPeriod = (data: Transaction[]) => {
       </View>
 
       {/* CHART CARD */}
-      <View style={[
-        styles.chartCard,
-        {
-          backgroundColor: isDark
-            ? "rgba(36, 44, 73, 0.8)"
-            : "rgba(255,255,255,0.95)",
-          shadowColor: isDark ? "#000" : "#5F6BFF",
-        }
-      ]}>
+      <View
+        style={[
+          styles.chartCard,
+          {
+            backgroundColor: isDark
+              ? "rgba(36, 44, 73, 0.8)"
+              : "rgba(255,255,255,0.95)",
+            shadowColor: isDark ? "#000" : "#5F6BFF",
+          },
+        ]}
+      >
         {/* HEADER ROW */}
         <View style={styles.chartHeaderRow}>
           <Text style={[styles.chartHeading, { color: theme.text }]}>
@@ -300,13 +318,8 @@ const filterByPeriod = (data: Transaction[]) => {
         </View>
 
         {showPeriodMenu && (
-          <View
-            style={[
-              styles.periodMenu,
-              { backgroundColor: theme.card },
-            ]}
-          >
-            {["All", "Day", "Week", "15days",].map((p) => (
+          <View style={[styles.periodMenu, { backgroundColor: theme.card }]}>
+            {["All", "Day", "Week", "15days"].map((p) => (
               <TouchableOpacity
                 key={p}
                 onPress={() => {
@@ -491,20 +504,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginRight: 8,
   },
-periodMenu: {
-  position: "absolute",
-  right: 10,
-  top: 50,
-  borderRadius: 12,
-  paddingVertical: 6,
+  periodMenu: {
+    position: "absolute",
+    right: 10,
+    top: 50,
+    borderRadius: 12,
+    paddingVertical: 6,
 
-  elevation: 20,
-  zIndex: 1000,
+    elevation: 20,
+    zIndex: 1000,
 
-  shadowColor: "#000",
-  shadowOpacity: 0.25,
-  shadowRadius: 12
-},
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+  },
   breakdownItem: {
     flexDirection: "row",
     justifyContent: "space-between",

@@ -1,25 +1,49 @@
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
+
+import { useTheme } from "../../src/context/ThemeContext";
 
 export default function TabsLayout() {
+  const { theme, isDark } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
-        tabBarStyle: {
-          height: 65,
-          paddingBottom: 8,
-        },
+        tabBarShowLabel: false,
+
+        // ✅ FIXED BACKGROUND
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            backgroundColor: theme.card + "CC", // 👈 KEY FIX
+            borderColor: theme.border,
+          },
+        ],
+
+        // ✅ FIXED BLUR
+        tabBarBackground: () => (
+          <BlurView
+            intensity={80}
+            tint={isDark ? "dark" : "light"}
+            style={StyleSheet.absoluteFill}
+          />
+        ),
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="home" focused={focused} theme={theme} />
           ),
         }}
       />
@@ -27,23 +51,18 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: "Reports",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart-outline" size={size} color={color} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="bar-chart" focused={focused} theme={theme} />
           ),
         }}
       />
 
-      {/* Floating Add Button */}
       <Tabs.Screen
         name="add"
         options={{
-          title: "",
           tabBarIcon: () => null,
           tabBarButton: (props) => (
-            <TouchableOpacity {...props} style={styles.fab}>
-              <Ionicons name="add" size={30} color="white" />
-            </TouchableOpacity>
+            <FloatingButton {...props} theme={theme} />
           ),
         }}
       />
@@ -51,9 +70,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="planner"
         options={{
-          title: "Planner",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet-outline" size={size} color={color} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="wallet" focused={focused} theme={theme} />
           ),
         }}
       />
@@ -61,33 +79,119 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "My Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="person" focused={focused} theme={theme} />
           ),
         }}
       />
 
-      {/* Hidden Screen (No tab space reserved) */}
-      <Tabs.Screen
-        name="transactions"
-        options={{
-          href: null
-        }}
-      />
+      <Tabs.Screen name="transactions" options={{ href: null }} />
     </Tabs>
   );
 }
 
+
+
+function TabIcon({ name, focused, theme }: any) {
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: withSpring(focused ? 1.25 : 1) }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.iconWrapper,
+        focused && {
+          backgroundColor: theme.primary,
+          shadowColor: theme.primary,
+          shadowOpacity: 0.6,
+          shadowRadius: 10,
+        },
+        style,
+      ]}
+    >
+      <Ionicons
+        name={`${name}${focused ? "" : "-outline"}`}
+        size={22}
+        color={focused ? "#fff" : theme.subText}
+      />
+    </Animated.View>
+  );
+}
+
+
+
+function FloatingButton({ theme, ...props }: any) {
+  const scale = useSharedValue(1);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.fabWrapper, style]}>
+     <TouchableOpacity
+  onPress={() => {
+    router.replace({
+      pathname: "/add",
+      params: {}, // 🔥 FORCE CLEAR PARAMS
+    });
+  }}
+  onPressIn={() => (scale.value = withSpring(0.9))}
+  onPressOut={() => (scale.value = withSpring(1))}
+>
+        <LinearGradient
+          colors={[theme.primary, "#06b6d4"]}
+          style={styles.fab}
+        >
+          <Ionicons name="add" size={28} color="white" />
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+
+
 const styles = StyleSheet.create({
-  fab: {
-    top: -20,
+  tabBar: {
+    position: "absolute",
+    bottom: 5 ,
+    left: 5,
+    right: 5,
+    height: 60,
+    borderRadius: 25,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#22c55e",
-    elevation: 6,
+  },
+
+  fabWrapper: {
+    top: -25,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  fab: {
+    width: 55,
+    height: 55,
+    borderRadius: 35,
+    justifyContent: "center",
+    alignItems: "center",
+
+    shadowColor: "#6366f1",
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 15,
   },
 });

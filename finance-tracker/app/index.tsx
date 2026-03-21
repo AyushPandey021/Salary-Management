@@ -1,22 +1,34 @@
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View, ActivityIndicator } from "react-native";
 
 export default function Index() {
   const router = useRouter();
 
   useEffect(() => {
-    const isLoggedIn = false;
+    checkAuth();
+  }, []);
 
-    const timer = setTimeout(() => {
-      if (isLoggedIn) {
+  const checkAuth = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      console.log("TOKEN:", token);
+
+      if (token) {
         router.replace("/(tabs)/dashboard");
       } else {
         router.replace("/login");
       }
-    }, 200); // 👈 IMPORTANT DELAY
+    } catch (err) {
+      router.replace("/login");
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  return null;
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
 }
