@@ -102,5 +102,5 @@ ak@gmail.com
 
 
 deployment  command 
-$env:EXPO_TOKEN="eas_xxxxxxxxxxxxxxxxxxxxxx"; npx eas build --platform android --profile preview
+$env:EXPO_TOKEN="c9J4oCFH7sRMCT5g0V4n1ClM7UcukEAEM4WMUr2P"; npx eas build --platform android --profile preview
 

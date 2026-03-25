@@ -285,7 +285,7 @@ export default function Transactions() {
       ? transactions
       : transactions.filter((t: any) => t.type === typeFilter);
 
-  filtered = filterByDate(filtered);
+      filtered = filterByDate(filtered);
 
   /* ================= ACTIONS ================= */
 

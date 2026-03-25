@@ -161,7 +161,7 @@ export default function AuthScreen() {
       {/* Logo */}
       <Animated.View style={styles.logoContainer}>
         <Image
-          source={require("../src/assets/images/t.jpg")} // 👈 your logo
+          source={require("../assets/images/t.jpg")} // 👈 your logo
           style={styles.logo }
         />
      

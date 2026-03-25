@@ -11,9 +11,9 @@
     "android": {
       "package": "com.ayushbabu.financetracker",
       "adaptiveIcon": {
-    "foregroundImage": "../assets/images/t.jpg",
-    "backgroundColor": "#ffffff"
-  }
+         "foregroundImage": "./assets/trackpay.png",
+        "backgroundColor": "#ffffff"
+      }
     },
 
     "plugins": ["expo-router"],
