@@ -6,6 +6,7 @@ const API = axios.create({
   baseURL: "https://salary-management-1.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
+    // "Content-Type": "application/json",
   },
 });
 
